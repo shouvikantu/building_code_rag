@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Local RAG QA</title>
+    <style>
+      :root {
+        --bg: #f4f6f8;
+        --card: #ffffff;
+        --muted: #6b7280;
+        --accent: #0b74de;
+        --danger: #b00020;
+      }
+      body {
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+          Roboto, "Helvetica Neue", Arial;
+        background: var(--bg);
+        margin: 0;
+        padding: 2rem;
+      }
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+      .header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+      }
+      .logo {
+        width: 48px;
+        height: 48px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #0b74de, #3eb3ff);
+        display: inline-block;
+      }
+      h1 {
+        margin: 0;
+        font-size: 1.25rem;
+      }
+      p.lead {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
+      .card {
+        background: var(--card);
+        border-radius: 10px;
+        box-shadow: 0 4px 18px rgba(15, 23, 42, 0.06);
+        padding: 1.25rem;
+        margin-top: 1rem;
+      }
+      label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+      }
+      textarea {
+        width: 100%;
+        min-height: 120px;
+        border: 1px solid #e6e9ee;
+        border-radius: 8px;
+        padding: 0.75rem;
+        font-size: 0.95rem;
+        resize: vertical;
+      }
+
+      .controls {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        margin-top: 0.75rem;
+      }
+      button.btn {
+        background: var(--accent);
+        color: white;
+        border: none;
+        padding: 0.55rem 0.9rem;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      button.btn:disabled {
+        opacity: 0.6;
+        cursor: default;
+      }
+      .muted {
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+
+      .status {
+        margin-left: 0.75rem;
+        color: var(--muted);
+        font-weight: 600;
+      }
+      .error {
+        color: var(--danger);
+        background: #fff1f0;
+        padding: 0.75rem;
+        border-radius: 8px;
+        margin-bottom: 0.75rem;
+      }
+
+      .answer-block {
+        background: var(--card);
+        padding: 1.5rem;
+        border-radius: 8px;
+        margin-top: 1rem;
+        border: 1px solid #e6eef8;
+        line-height: 1.6; /* Better readability */
+        color: #1f2937;
+      }
+      /* Style the Markdown elements inside the answer */
+      .markdown-body ul,
+      .markdown-body ol {
+        padding-left: 1.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .markdown-body li {
+        margin-bottom: 0.5rem;
+      }
+
+      .markdown-body p {
+        margin-bottom: 1rem;
+      }
+
+      /* Make citations pop out like small "chips" */
+      /* This matches your GPT prompt pattern [filename#pX] */
+      .answer-block strong {
+        color: #111827;
+      }
+
+      /* Optional: Highlight brackets to make citations look like tags */
+      .answer-block {
+        font-size: 1rem;
+      }
+
+      /* simple spinner */
+      .spinner {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        display: inline-block;
+        border: 3px solid rgba(255, 255, 255, 0.35);
+        border-top-color: rgba(255, 255, 255, 0.9);
+        animation: spin 1s linear infinite;
+        vertical-align: middle;
+        margin-right: 0.5rem;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <div class="logo" aria-hidden></div>
+        <div>
+          <h1>Local RAG QA</h1>
+          <p class="lead">
+            Ask questions about the documents indexed by your RAG system.
+            Answers include citations when available.
+          </p>
+        </div>
+      </div>
+
+      {% if error %}
+      <div class="error">
+        <strong>Error:</strong>
+        <pre style="margin: 0; white-space: pre-wrap">{{ error }}</pre>
+      </div>
+      {% endif %}
+
+      <div class="card">
+        <form id="qa-form" method="post">
+          <label for="question">Question</label>
+          <textarea
+            id="question"
+            name="question"
+            placeholder="e.g. What amenities are required for a 41-unit housing development?"
+          >
+{{ question or '' }}</textarea
+          >
+
+          <div class="controls">
+            <button id="ask-btn" class="btn" type="submit">Ask</button>
+            <div id="status" class="status" aria-live="polite"></div>
+            <div style="margin-left: auto" class="muted">
+              Top-K: {{ TOP_K if TOP_K is defined else '6' }}
+            </div>
+          </div>
+        </form>
+
+        {% if answer %}
+        <h2 style="margin-top: 1.25rem">Answer</h2>
+        <div class="answer-block markdown-body">{{ answer|safe }}</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <script>
+      // Show a generating state immediately when user submits the form so they get feedback.
+      const form = document.getElementById("qa-form");
+      const statusEl = document.getElementById("status");
+      const askBtn = document.getElementById("ask-btn");
+
+      form.addEventListener("submit", function (e) {
+        // Show generating indicator; allow form to submit normally.
+        askBtn.disabled = true;
+        statusEl.innerHTML = '<span class="spinner"></span>Generating...';
+      });
+
+      // Automatically wrap [source#pX] in a styled tag
+      const answerBlock = document.querySelector(".answer-block");
+      if (answerBlock) {
+        answerBlock.innerHTML = answerBlock.innerHTML.replace(
+          /\[([^\]]+)\]/g,
+          '<span class="citation">[$1]</span>'
+        );
+      }
+    </script>
+  </body>
+</html>

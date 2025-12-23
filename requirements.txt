@@ -1,0 +1,5 @@
+flask
+openai
+pinecone
+pypdf
+langchain-text-splitters
