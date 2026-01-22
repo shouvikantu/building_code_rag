@@ -9,15 +9,18 @@ Features:
 - Query zoning information (base zone, overlays, plan districts)
 - Query building information (name, address, type, square footage, etc.)
 - Query taxlot/parcel information
+- Batch query by ZIP code and export to CSV
 
 Usage:
-    python zoning.py
+    python zoning.py --zip 97211 --num 10
 
 """
 
 import requests
 from geopy.geocoders import Nominatim
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional, Tuple, List
+import csv
+import argparse
 
 # API URLs
 ZONING_QUERY_URL = "https://www.portlandmaps.com/od/rest/services/COP_OpenData_ZoningCode/MapServer/16/query"
@@ -261,28 +264,117 @@ def query_taxlot(lat: float, lon: float) -> Optional[Dict]:
     return None
 
 
+def query_taxlots_by_zip(zip_code: str, max_results: int = 10) -> List[Dict]:
+    """
+    Query taxlots by ZIP code.
+
+    Args:
+        zip_code: The ZIP code to query.
+        max_results: Maximum number of results to return.
+
+    Returns:
+        A list of feature dictionaries.
+    """
+    params = {
+        "where": f"ZIP_CODE = '{zip_code}'",
+        "outFields": "*",
+        "f": "json",
+        "resultRecordCount": max_results
+    }
+    for url in TAXLOT_QUERY_URLS:
+        try:
+            resp = requests.get(url, params=params, timeout=10)
+            resp.raise_for_status()
+            data = resp.json()
+            features = data.get("features", [])
+            if features:
+                return features[:max_results]
+        except Exception:
+            continue
+    return []
+
+
 def main() -> None:
     """
-    Main function to demonstrate the tool with an example address.
+    Main function to query properties by ZIP code and export to CSV.
     """
-    # Example usage: get zoning and building info for a Portland address
-    address = "935 NE 33RD AVE, Portland, OR"
+    parser = argparse.ArgumentParser(description="Query Portland property information by ZIP code.")
+    parser.add_argument("--zip", required=True, help="ZIP code to query")
+    parser.add_argument("--num", type=int, default=10, help="Number of properties to query (default: 10)")
+    parser.add_argument("--output", default="properties.csv", help="Output CSV file (default: properties.csv)")
+    args = parser.parse_args()
 
-    try:
-        # Get zoning info for the address
-        result = get_zoning_for_address(address)
-        print(format_zoning_result(result))
+    zip_code = args.zip
+    num_properties = args.num
+    output_file = args.output
 
-        # Extract lat/lon for further queries
-        lat = result["location"]["lat"]
-        lon = result["location"]["lon"]
+    print(f"Querying {num_properties} properties in ZIP {zip_code}...")
 
-        # Query and print building info
-        building_attrs = query_building(lat, lon)
-        print_building_info(building_attrs)
+    # Query taxlots by ZIP
+    taxlot_features = query_taxlots_by_zip(zip_code, num_properties)
+    if not taxlot_features:
+        print("No taxlots found for this ZIP code.")
+        return
 
-    except Exception as e:
-        print(f"Error: {e}")
+    # Collect data for each property
+    properties_data = []
+    for feature in taxlot_features:
+        attrs = feature["attributes"]
+        address = attrs.get("SITE_ADDR") or attrs.get("ADDRESS") or attrs.get("ADDRESS_FULL")
+        if not address:
+            continue  # Skip if no address
+
+        try:
+            # Geocode to get lat/lon
+            geo = geocode_address(address + ", Portland, OR")
+            lat = geo["latitude"]
+            lon = geo["longitude"]
+
+            # Query zoning
+            zoning_feature = query_zoning(lat, lon)
+            zoning = extract_zoning_attrs(zoning_feature)
+
+            # Query building
+            building_attrs = query_building(lat, lon)
+
+            # Query taxlot (already have from initial query, but for consistency)
+            taxlot_attrs = attrs
+
+            # Collect data
+            data = {
+                "Address": address,
+                "Latitude": lat,
+                "Longitude": lon,
+                "Base Zone": zoning["base_zone"],
+                "Overlay Zone": zoning["raw_attributes"].get("OVRLY"),
+                "Plan District": zoning["raw_attributes"].get("PLDIST"),
+                "Building Name": building_attrs.get("BLDG_NAME") if building_attrs else None,
+                "Building Address": building_attrs.get("BLDG_ADDR") if building_attrs else None,
+                "Year Built": building_attrs.get("YEAR_BUILT") if building_attrs else None,
+                "Building Type": building_attrs.get("BLDG_TYPE") if building_attrs else None,
+                "Square Footage": building_attrs.get("BLDG_SQFT") if building_attrs else None,
+                "Number of Stories": building_attrs.get("NUM_STORY") if building_attrs else None,
+                "Residential Units": building_attrs.get("UNITS_RES") if building_attrs else None,
+                "Taxlot ID": taxlot_attrs.get("TLID") or taxlot_attrs.get("TAXLOT_ID"),
+                "Owner": taxlot_attrs.get("OWNER"),
+                "Land Use": taxlot_attrs.get("LANDUSE"),
+            }
+            properties_data.append(data)
+
+        except Exception as e:
+            print(f"Error processing {address}: {e}")
+            continue
+
+    # Write to CSV
+    if properties_data:
+        fieldnames = properties_data[0].keys()
+        with open(output_file, "w", newline="") as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows(properties_data)
+        print(f"Data exported to {output_file}")
+    else:
+        print("No data collected.")
 
 
 if __name__ == "__main__":
