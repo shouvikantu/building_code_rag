@@ -14,11 +14,16 @@ import time
 from pathlib import Path
 from typing import List, Dict, Any
 import hashlib
+import re
 from pypdf import PdfReader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from openai import OpenAI
+from dotenv import load_dotenv
 
 from pinecone import Pinecone, ServerlessSpec
+
+# Load environment variables from .env file
+load_dotenv()
 
 
 # ================= CONFIG =================
@@ -27,9 +32,21 @@ DOC_DIR = Path("./docs")
 DOC_GLOB = "*.pdf"
 
 # Pinecone index config
-INDEX_NAME = "portland-zoning-rag"
+RAW_INDEX_NAME = os.getenv("PINECONE_INDEX_NAME", "portland-zoning-rag")
+
+
+def normalize_index_name(name: str) -> str:
+    """Pinecone index names must be lowercase and contain only [a-z0-9-]."""
+    n = name.strip().lower()
+    n = re.sub(r"[^a-z0-9-]+", "-", n)
+    n = re.sub(r"-{2,}", "-", n).strip("-")
+    return n
+
+
+INDEX_NAME = normalize_index_name(RAW_INDEX_NAME)
 CLOUD = "aws"         
 REGION = "us-east-1" 
+INDEX_READY_TIMEOUT = int(os.getenv("PINECONE_READY_TIMEOUT", "180"))
 
 # Embedding and chat models
 EMBED_MODEL = "text-embedding-3-small"  # 1536-dim
@@ -108,20 +125,34 @@ def ensure_index(pc: Pinecone, name: str) -> None:
         pc: a Pinecone client instance.
         name: index name to ensure exists.
     """
+    if name != RAW_INDEX_NAME:
+        print(f"[pinecone] normalized index name {RAW_INDEX_NAME!r} -> {name!r}", flush=True)
+
     names = {idx["name"] for idx in pc.list_indexes()}
     if name not in names:
+        print(f"[pinecone] creating index {name!r}...", flush=True)
         pc.create_index(
             name=name,
             dimension=EMBED_DIM,
             metric="cosine",
             spec=ServerlessSpec(cloud=CLOUD, region=REGION)
         )
-        # Wait until the index is ready
-        while True:
-            desc = pc.describe_index(name)
-            if desc.status["ready"]:
-                break
-            time.sleep(1)
+    else:
+        print(f"[pinecone] index {name!r} already exists", flush=True)
+
+    # Wait until the index is ready (bounded wait to avoid hanging forever)
+    start = time.time()
+    while True:
+        desc = pc.describe_index(name)
+        if desc.status["ready"]:
+            print(f"[pinecone] index {name!r} ready", flush=True)
+            break
+        if time.time() - start > INDEX_READY_TIMEOUT:
+            raise TimeoutError(
+                f"Index {name!r} not ready after {INDEX_READY_TIMEOUT}s. "
+                "Check Pinecone status or PINECONE_INDEX_NAME."
+            )
+        time.sleep(1)
 
 
 # ================= INGEST =================
@@ -146,6 +177,7 @@ def ingest(chunks: List[Dict[str, Any]], pc: Pinecone, client: OpenAI) -> None:
     for i in range(0, len(chunks), 100):
         batch = chunks[i : i + 100]
         texts = [c["text"] for c in batch]
+        print(f"[ingest] embedding batch {i//100 + 1} ({len(batch)} chunks)...", flush=True)
         embeddings = embed_texts(client, texts)
         
         vectors = []
@@ -158,6 +190,7 @@ def ingest(chunks: List[Dict[str, Any]], pc: Pinecone, client: OpenAI) -> None:
                 "metadata": {**chunk["metadata"], "text": chunk["text"][:MAX_META_TEXT]}
             })
         index.upsert(vectors=vectors)
+        print(f"[ingest] upserted batch {i//100 + 1}", flush=True)
 
 
 # ================= RETRIEVE =================
@@ -255,14 +288,18 @@ if __name__ == "__main__":
     if not os.environ.get("PINECONE_API_KEY"):
         raise SystemExit("Set PINECONE_API_KEY")
 
+    print("[main] initializing clients...", flush=True)
     oa = OpenAI()
     pc = Pinecone(api_key=os.environ["PINECONE_API_KEY"])
 
     # Ingest documents found under ./docs (comment this out if index already populated)
+    print("[main] loading PDFs from ./docs...", flush=True)
     chunks = all_chunks()
+    print(f"[main] total chunks: {len(chunks)}", flush=True)
     ingest(chunks, pc, oa)
 
     q = "I am planning to build a 41-unit housing development, what amenities am I required to provide the community?"
+    print("[main] retrieving matches...", flush=True)
     hits = retrieve(q, pc, oa, k=TOP_K)
 
     print("\nTop matches:")

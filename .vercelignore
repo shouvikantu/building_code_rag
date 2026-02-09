@@ -1,0 +1,9 @@
+.env
+__pycache__/
+*.pyc
+*.ipynb
+test.csv
+filtered.csv
+properties.csv
+test_rag.ipynb
+lightrag_storage/

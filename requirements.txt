@@ -3,3 +3,7 @@ openai
 pinecone
 pypdf
 langchain-text-splitters
+requests
+geopy
+lightrag
+python-dotenv

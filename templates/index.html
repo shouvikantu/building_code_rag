@@ -3,89 +3,176 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Local RAG QA</title>
+    <title>Portland Zoning Query</title>
     <style>
+      @import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap");
       :root {
-        --bg: #f4f6f8;
-        --card: #ffffff;
-        --muted: #6b7280;
-        --accent: #0b74de;
-        --danger: #b00020;
+        --bg: #f6f7fb;
+        --bg-accent: #eef2ff;
+        --surface: #ffffff;
+        --surface-alt: #f0f6ff;
+        --text: #0f172a;
+        --muted: #5b667a;
+        --accent: #0a7a7e;
+        --accent-strong: #086368;
+        --danger: #b42318;
+        --border: #e2e8f0;
+        --shadow: 0 18px 50px rgba(15, 23, 42, 0.12);
+        --shadow-soft: 0 8px 24px rgba(15, 23, 42, 0.08);
+        --radius: 16px;
       }
       body {
-        font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI",
-          Roboto, "Helvetica Neue", Arial;
-        background: var(--bg);
+        font-family: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system,
+          "Segoe UI", "Helvetica Neue", Arial;
+        background: radial-gradient(circle at top right, #e5f4f1, transparent 45%),
+          radial-gradient(circle at 15% 20%, #dfe7ff, transparent 40%),
+          var(--bg);
+        color: var(--text);
         margin: 0;
-        padding: 2rem;
+        padding: 2.5rem 1.5rem 4rem;
       }
       .container {
-        max-width: 900px;
+        max-width: 1100px;
         margin: 0 auto;
       }
       .header {
-        display: flex;
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 1.5rem;
         align-items: center;
-        gap: 1rem;
-        margin-bottom: 1rem;
+        margin-bottom: 2rem;
       }
       .logo {
-        width: 48px;
-        height: 48px;
-        border-radius: 8px;
-        background: linear-gradient(135deg, #0b74de, #3eb3ff);
+        width: 60px;
+        height: 60px;
+        border-radius: 18px;
+        background: linear-gradient(135deg, #0f766e, #38b2ac);
         display: inline-block;
+        box-shadow: var(--shadow-soft);
       }
       h1 {
         margin: 0;
-        font-size: 1.25rem;
+        font-family: "Space Grotesk", "IBM Plex Sans", sans-serif;
+        font-size: 2rem;
+        letter-spacing: -0.02em;
       }
       p.lead {
-        margin: 0;
+        margin: 0.35rem 0 0;
         color: var(--muted);
-        font-size: 0.95rem;
+        font-size: 1rem;
       }
 
       .card {
-        background: var(--card);
-        border-radius: 10px;
-        box-shadow: 0 4px 18px rgba(15, 23, 42, 0.06);
-        padding: 1.25rem;
+        background: var(--surface);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 1.5rem 1.75rem;
         margin-top: 1rem;
+        border: 1px solid rgba(226, 232, 240, 0.6);
+      }
+      .card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+      }
+      .card-title {
+        font-family: "Space Grotesk", "IBM Plex Sans", sans-serif;
+        font-size: 1.25rem;
+        margin: 0;
+      }
+      .card-subtitle {
+        margin: 0.2rem 0 0;
+        color: var(--muted);
+        font-size: 0.95rem;
       }
       label {
         display: block;
         font-weight: 600;
         margin-bottom: 0.5rem;
       }
-      textarea {
+      input, select, textarea {
         width: 100%;
-        min-height: 120px;
-        border: 1px solid #e6e9ee;
-        border-radius: 8px;
-        padding: 0.75rem;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 0.75rem 0.85rem;
         font-size: 0.95rem;
-        resize: vertical;
+        background: #ffffff;
+        color: var(--text);
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      }
+      input:focus-visible, select:focus-visible, textarea:focus-visible {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(10, 122, 126, 0.2);
+      }
+      .input-group {
+        margin-bottom: 1rem;
+      }
+      .input-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+        gap: 1rem;
+      }
+      .radio-group {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 0.75rem;
+        margin-bottom: 1.25rem;
+      }
+      .radio-option {
+        background: var(--surface-alt);
+        border: 1px solid transparent;
+        border-radius: 12px;
+        padding: 0.75rem 0.9rem;
+        display: flex;
+        gap: 0.6rem;
+        align-items: center;
+        transition: border-color 0.2s ease, transform 0.2s ease;
+      }
+      .radio-option input {
+        accent-color: var(--accent);
+      }
+      .radio-option span {
+        font-weight: 600;
+        font-size: 0.95rem;
+      }
+      .radio-option small {
+        display: block;
+        color: var(--muted);
+        font-weight: 400;
+        font-size: 0.85rem;
       }
 
       .controls {
         display: flex;
         gap: 0.5rem;
         align-items: center;
-        margin-top: 0.75rem;
+        margin-top: 1rem;
       }
       button.btn {
         background: var(--accent);
         color: white;
         border: none;
-        padding: 0.55rem 0.9rem;
-        border-radius: 8px;
+        padding: 0.65rem 1.2rem;
+        border-radius: 12px;
         font-weight: 600;
         cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+        box-shadow: 0 10px 20px rgba(10, 122, 126, 0.22);
+      }
+      button.btn:hover {
+        transform: translateY(-1px);
+        background: var(--accent-strong);
+      }
+      button.btn.secondary {
+        background: #0f172a;
+        box-shadow: 0 10px 20px rgba(15, 23, 42, 0.2);
       }
       button.btn:disabled {
         opacity: 0.6;
         cursor: default;
+        transform: none;
       }
       .muted {
         color: var(--muted);
@@ -100,44 +187,71 @@
       .error {
         color: var(--danger);
         background: #fff1f0;
-        padding: 0.75rem;
-        border-radius: 8px;
-        margin-bottom: 0.75rem;
+        padding: 0.9rem 1rem;
+        border-radius: 12px;
+        margin-bottom: 1rem;
+        border: 1px solid rgba(180, 35, 24, 0.25);
       }
 
-      .answer-block {
-        background: var(--card);
-        padding: 1.5rem;
-        border-radius: 8px;
+      .table-container {
+        overflow-x: auto;
         margin-top: 1rem;
-        border: 1px solid #e6eef8;
-        line-height: 1.6; /* Better readability */
-        color: #1f2937;
+        border-radius: 14px;
+        border: 1px solid var(--border);
       }
-      /* Style the Markdown elements inside the answer */
-      .markdown-body ul,
-      .markdown-body ol {
-        padding-left: 1.5rem;
-        margin-bottom: 1rem;
+      .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+        min-width: 820px;
       }
-
-      .markdown-body li {
-        margin-bottom: 0.5rem;
+      .data-table th, .data-table td {
+        padding: 0.5rem;
+        text-align: left;
+        border-bottom: 1px solid #e6e9ee;
       }
-
-      .markdown-body p {
-        margin-bottom: 1rem;
+      .data-table th {
+        background: #f8fafc;
+        font-weight: 600;
+        color: #0f172a;
       }
-
-      /* Make citations pop out like small "chips" */
-      /* This matches your GPT prompt pattern [filename#pX] */
-      .answer-block strong {
-        color: #111827;
+      .section-title {
+        font-family: "Space Grotesk", "IBM Plex Sans", sans-serif;
+        font-size: 1.4rem;
+        margin: 2rem 0 0.6rem;
       }
-
-      /* Optional: Highlight brackets to make citations look like tags */
-      .answer-block {
-        font-size: 1rem;
+      .section-note {
+        margin: 0 0 1rem;
+        color: var(--muted);
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        background: #e2f3f1;
+        color: var(--accent-strong);
+        font-weight: 600;
+        border-radius: 999px;
+        padding: 0.35rem 0.75rem;
+        font-size: 0.85rem;
+      }
+      .results-card {
+        background: var(--surface);
+        border-radius: var(--radius);
+        border: 1px solid rgba(226, 232, 240, 0.7);
+        padding: 1.5rem;
+        margin-top: 1.5rem;
+        box-shadow: var(--shadow-soft);
+      }
+      .grid {
+        display: grid;
+        gap: 1.5rem;
+      }
+      @media (min-width: 960px) {
+        .grid {
+          grid-template-columns: 1.2fr 1fr;
+          align-items: start;
+        }
       }
 
       /* simple spinner */
@@ -157,6 +271,21 @@
           transform: rotate(360deg);
         }
       }
+      @media (max-width: 720px) {
+        body {
+          padding: 1.5rem 1rem 3rem;
+        }
+        .header {
+          grid-template-columns: 1fr;
+        }
+        .logo {
+          width: 52px;
+          height: 52px;
+        }
+        .card {
+          padding: 1.25rem;
+        }
+      }
     </style>
   </head>
   <body>
@@ -164,10 +293,9 @@
       <div class="header">
         <div class="logo" aria-hidden></div>
         <div>
-          <h1>Local RAG QA</h1>
+          <h1>Portland Zoning Query</h1>
           <p class="lead">
-            Ask questions about the documents indexed by your RAG system.
-            Answers include citations when available.
+            Query zoning and building information for addresses or properties in a ZIP code.
           </p>
         </div>
       </div>
@@ -179,53 +307,256 @@
       </div>
       {% endif %}
 
-      <div class="card">
-        <form id="qa-form" method="post">
-          <label for="question">Question</label>
-          <textarea
-            id="question"
-            name="question"
-            placeholder="e.g. What amenities are required for a 41-unit housing development?"
-          >
-{{ question or '' }}</textarea
-          >
+      <div class="grid">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <p class="card-title">Property Search</p>
+              <p class="card-subtitle">Find zoning details by address or ZIP.</p>
+            </div>
+            <span class="pill">Live data</span>
+          </div>
+          <form id="zoning-form" method="post">
+            <div class="radio-group">
+              <label class="radio-option">
+                <input type="radio" name="query_type" value="address" {% if query_type == 'address' %}checked{% endif %}>
+                <span>Single Address<small>Exact address lookup</small></span>
+              </label>
+              <label class="radio-option">
+                <input type="radio" name="query_type" value="zip" {% if query_type == 'zip' %}checked{% endif %}>
+                <span>ZIP Code & Properties<small>Batch results</small></span>
+              </label>
+            </div>
 
-          <div class="controls">
-            <button id="ask-btn" class="btn" type="submit">Ask</button>
-            <div id="status" class="status" aria-live="polite"></div>
-            <div style="margin-left: auto" class="muted">
-              Top-K: {{ TOP_K if TOP_K is defined else '6' }}
+            <div id="address-input" class="input-group">
+              <label for="address">Address</label>
+              <input
+                type="text"
+                id="address"
+                name="address"
+                placeholder="e.g. 935 NE 33RD AVE, Portland, OR"
+                value="{{ address or '' }}"
+              >
+            </div>
+
+            <div id="zip-input" class="input-group" style="display: none;">
+              <label for="zip">ZIP Code</label>
+              <input
+                type="text"
+                id="zip"
+                name="zip"
+                placeholder="e.g. 97211"
+                value="{{ zip or '' }}"
+              >
+              <div class="input-row" style="margin-top: 0.8rem;">
+                <div>
+                  <label for="num">Number of Properties</label>
+                  <input
+                    type="number"
+                    id="num"
+                    name="num"
+                    min="1"
+                    max="100"
+                    value="{{ num or 10 }}"
+                  >
+                </div>
+                <div>
+                  <label for="min_sqft">Minimum Square Footage</label>
+                  <input
+                    type="number"
+                    id="min_sqft"
+                    name="min_sqft"
+                    min="0"
+                    value="{{ min_sqft or '' }}"
+                  >
+                </div>
+              </div>
+              <label for="base_zones" style="margin-top: 0.8rem;">Base Zone Filter (optional)</label>
+              <select
+                multiple
+                id="base_zones"
+                name="base_zones"
+                size="6"
+              >
+                <option value="CI1" {% if 'CI1' in base_zones %}selected{% endif %}>CI1 - Campus Institutional 1</option>
+                <option value="CI2" {% if 'CI2' in base_zones %}selected{% endif %}>CI2 - Campus Institutional 2</option>
+                <option value="CX" {% if 'CX' in base_zones %}selected{% endif %}>CX - Central Commercial</option>
+                <option value="EX" {% if 'EX' in base_zones %}selected{% endif %}>EX - Central Employment</option>
+                <option value="RX" {% if 'RX' in base_zones %}selected{% endif %}>RX - Central Residential</option>
+                <option value="CE" {% if 'CE' in base_zones %}selected{% endif %}>CE - Commercial Employment</option>
+                <option value="CM1" {% if 'CM1' in base_zones %}selected{% endif %}>CM1 - Commercial Mixed Use 1</option>
+                <option value="CM2" {% if 'CM2' in base_zones %}selected{% endif %}>CM2 - Commercial Mixed Use 2</option>
+                <option value="CM3" {% if 'CM3' in base_zones %}selected{% endif %}>CM3 - Commercial Mixed Use 3</option>
+                <option value="CR" {% if 'CR' in base_zones %}selected{% endif %}>CR - Commercial Residential</option>
+                <option value="CL" {% if 'CL' in base_zones %}selected{% endif %}>CL - County Zoning Clackamas</option>
+                <option value="MC" {% if 'MC' in base_zones %}selected{% endif %}>MC - County Zoning Multnomah</option>
+                <option value="EG1" {% if 'EG1' in base_zones %}selected{% endif %}>EG1 - General Employment 1</option>
+                <option value="EG2" {% if 'EG2' in base_zones %}selected{% endif %}>EG2 - General Employment 2</option>
+                <option value="IG1" {% if 'IG1' in base_zones %}selected{% endif %}>IG1 - General Industrial 1</option>
+                <option value="IG2" {% if 'IG2' in base_zones %}selected{% endif %}>IG2 - General Industrial 2</option>
+                <option value="IH" {% if 'IH' in base_zones %}selected{% endif %}>IH - Heavy Industrial</option>
+                <option value="IR" {% if 'IR' in base_zones %}selected{% endif %}>IR - Institutional Residential</option>
+                <option value="OS" {% if 'OS' in base_zones %}selected{% endif %}>OS - Open Space</option>
+                <option value="R10" {% if 'R10' in base_zones %}selected{% endif %}>R10 - Residential 10,000</option>
+                <option value="R2.5" {% if 'R2.5' in base_zones %}selected{% endif %}>R2.5 - Residential 2,500</option>
+                <option value="R20" {% if 'R20' in base_zones %}selected{% endif %}>R20 - Residential 20,000</option>
+                <option value="R5" {% if 'R5' in base_zones %}selected{% endif %}>R5 - Residential 5,000</option>
+                <option value="R7" {% if 'R7' in base_zones %}selected{% endif %}>R7 - Residential 7,000</option>
+                <option value="RF" {% if 'RF' in base_zones %}selected{% endif %}>RF - Residential Farm / Forest</option>
+                <option value="RMP" {% if 'RMP' in base_zones %}selected{% endif %}>RMP - Residential Manufactured Dwelling Park</option>
+                <option value="RM1" {% if 'RM1' in base_zones %}selected{% endif %}>RM1 - Residential Multi-Dwelling 1</option>
+                <option value="RM2" {% if 'RM2' in base_zones %}selected{% endif %}>RM2 - Residential Multi-Dwelling 2</option>
+                <option value="RM3" {% if 'RM3' in base_zones %}selected{% endif %}>RM3 - Residential Multi-Dwelling 3</option>
+                <option value="RM4" {% if 'RM4' in base_zones %}selected{% endif %}>RM4 - Residential Multi-Dwelling 4</option>
+              </select>
+            </div>
+
+            <div class="controls">
+              <button id="query-btn" class="btn" type="submit">Get Zoning Info</button>
+              <div id="status" class="status" aria-live="polite"></div>
+            </div>
+          </form>
+        </div>
+
+        <div class="card" style="background: var(--surface-alt); border: none;">
+          <div class="card-header">
+            <div>
+              <p class="card-title">Tips for Better Results</p>
+              <p class="card-subtitle">Fewer errors, faster answers.</p>
             </div>
           </div>
-        </form>
-
-        {% if answer %}
-        <h2 style="margin-top: 1.25rem">Answer</h2>
-        <div class="answer-block markdown-body">{{ answer|safe }}</div>
-        {% endif %}
+          <ul style="margin: 0; padding-left: 1.1rem; color: var(--muted); line-height: 1.5;">
+            <li>Use full street addresses for single property lookups.</li>
+            <li>ZIP searches work best with smaller batches (10–25).</li>
+            <li>Add base zone filters to narrow large ZIP results.</li>
+            <li>Ask property questions after results load.</li>
+          </ul>
+        </div>
       </div>
+
+      {% if properties %}
+        <div class="results-card">
+          <p class="section-title">Zoning Information</p>
+          <p class="section-note">Review property zoning, building, and taxlot details.</p>
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Address</th>
+                  <th>Latitude</th>
+                  <th>Longitude</th>
+                  <th>Base Zone</th>
+                  <th>Overlay Zone</th>
+                  <th>Plan District</th>
+                  <th>Building Name</th>
+                  <th>Year Built</th>
+                  <th>Square Footage</th>
+                  <th>Stories</th>
+                  <th>Residential Units</th>
+                  <th>Taxlot ID</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for prop in properties %}
+                <tr>
+                  <td>{{ prop.Address or '' }}</td>
+                  <td>{{ prop.Latitude or '' }}</td>
+                  <td>{{ prop.Longitude or '' }}</td>
+                  <td>{{ prop['Base Zone'] or '' }}</td>
+                  <td>{{ prop['Overlay Zone'] or '' }}</td>
+                  <td>{{ prop['Plan District'] or '' }}</td>
+                  <td>{{ prop['Building Name'] or '' }}</td>
+                  <td>{{ prop['Year Built'] or '' }}</td>
+                  <td>{{ prop['Square Footage'] or '' }}</td>
+                  <td>{{ prop['Number of Stories'] or '' }}</td>
+                  <td>{{ prop['Residential Units'] or '' }}</td>
+                  <td>{{ prop['Taxlot ID'] or '' }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="results-card">
+          <p class="section-title">Ask About a Property</p>
+          <p class="section-note">Ask zoning or usage questions tied to a specific property.</p>
+          <form method="post" style="margin-top: 0.75rem">
+            <input type="hidden" name="action" value="rag">
+            <input type="hidden" name="query_type" value="{{ query_type }}">
+            <textarea name="properties_json" style="display:none;">{{ properties | tojson }}</textarea>
+
+            <div class="input-group">
+              <label for="property_index">Select Property</label>
+              <select id="property_index" name="property_index">
+                {% for prop in properties %}
+                <option value="{{ loop.index0 }}" {% if selected_property_index == loop.index0 %}selected{% endif %}>
+                  {{ prop.get('Address') or prop.get('Building Address') or ('Property ' ~ loop.index) }}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="input-group">
+              <label for="property_question">Your Question</label>
+              <input
+                type="text"
+                id="property_question"
+                name="property_question"
+                placeholder="e.g. Is daycare allowed on this property?"
+                value="{{ property_question or '' }}"
+              >
+            </div>
+
+            <div class="controls">
+              <button class="btn secondary" type="submit">Ask RAG</button>
+            </div>
+          </form>
+
+          {% if rag_answer %}
+          <div class="card" style="margin-top: 1rem">
+            <h3 style="margin-top: 0; font-family: 'Space Grotesk', sans-serif;">RAG Answer</h3>
+            <pre style="white-space: pre-wrap; margin: 0">{{ rag_answer }}</pre>
+          </div>
+          {% endif %}
+        </div>
+      {% endif %}
     </div>
 
     <script>
-      // Show a generating state immediately when user submits the form so they get feedback.
-      const form = document.getElementById("qa-form");
-      const statusEl = document.getElementById("status");
-      const askBtn = document.getElementById("ask-btn");
+      // Toggle input fields based on query type
+      const queryTypeRadios = document.querySelectorAll('input[name="query_type"]');
+      const addressInput = document.getElementById('address-input');
+      const zipInput = document.getElementById('zip-input');
 
-      form.addEventListener("submit", function (e) {
-        // Show generating indicator; allow form to submit normally.
-        askBtn.disabled = true;
-        statusEl.innerHTML = '<span class="spinner"></span>Generating...';
+      function updateInputs() {
+        const selected = document.querySelector('input[name="query_type"]:checked').value;
+        if (selected === 'address') {
+          addressInput.style.display = 'block';
+          zipInput.style.display = 'none';
+        } else {
+          addressInput.style.display = 'none';
+          zipInput.style.display = 'block';
+        }
+      }
+
+      queryTypeRadios.forEach(radio => {
+        radio.addEventListener('change', updateInputs);
       });
 
-      // Automatically wrap [source#pX] in a styled tag
-      const answerBlock = document.querySelector(".answer-block");
-      if (answerBlock) {
-        answerBlock.innerHTML = answerBlock.innerHTML.replace(
-          /\[([^\]]+)\]/g,
-          '<span class="citation">[$1]</span>'
-        );
-      }
+      // Initial update
+      updateInputs();
+
+      // Show a generating state immediately when user submits the form so they get feedback.
+      const form = document.getElementById("zoning-form");
+      const statusEl = document.getElementById("status");
+      const queryBtn = document.getElementById("query-btn");
+
+      form.addEventListener("submit", function () {
+        // Show generating indicator; allow form to submit normally.
+        queryBtn.disabled = true;
+        statusEl.innerHTML = '<span class="spinner"></span>Querying...';
+      });
     </script>
   </body>
 </html>

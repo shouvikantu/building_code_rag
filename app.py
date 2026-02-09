@@ -1,73 +1,137 @@
 """
 app.py
 
-Very small Flask web UI that exposes a single page where users can ask a
-question and receive a RAG-generated answer. The view is deliberately simple
-and intended for local use only.
-
-Expected environment variables:
-- OPENAI_API_KEY
-- PINECONE_API_KEY
-
-The app imports `retrieve` and `answer` from `rag_pinecone.py` and uses them
-to obtain the top hits and produce a final answer.
+Flask web UI for Portland Zoning Query Tool.
+Allows querying single addresses or multiple properties by ZIP code.
 """
 
 from flask import Flask, render_template, request
-import os
-import traceback
-import markdown
-# Import the retrieval/answer functions from the RAG module
-from rag_pinecone import retrieve, answer, TOP_K
+import logging
+import json
+from dotenv import load_dotenv
+from light_rag_impl import start_background_init
 
-from openai import OpenAI
-from pinecone import Pinecone
-
+# Load environment variables from .env
+load_dotenv()
 
 app = Flask(__name__)
 
+# Basic logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-def make_clients():
-    """Create and return initialized OpenAI and Pinecone clients.
-
-    Raises:
-        RuntimeError: if required environment variables are missing.
-
-    Returns:
-        Tuple(OpenAI, Pinecone)
-    """
-    if not os.environ.get("OPENAI_API_KEY"):
-        raise RuntimeError("OPENAI_API_KEY not set")
-    if not os.environ.get("PINECONE_API_KEY"):
-        raise RuntimeError("PINECONE_API_KEY not set")
-    oa = OpenAI()
-    pc = Pinecone(api_key=os.environ["PINECONE_API_KEY"]) 
-    return oa, pc
+start_background_init()
 
 
 @app.route("/", methods=["GET", "POST"])
 def index():
-    answer_text = None
+    properties = None
     error = None
-    question = ""
+    address = ""
+    zip_code = ""
+    num = 10
+    base_zones = []
+    min_sqft = ""
+    query_type = "address"
+    rag_answer = None
+    property_question = ""
+    selected_property_index = 0
+
     if request.method == "POST":
-        question = request.form.get("question", "").strip()
-        if not question:
-            error = "Please enter a question."
+        action = request.form.get("action", "search")
+        if action == "rag":
+            property_question = request.form.get("property_question", "").strip()
+            selected_property_index = int(request.form.get("property_index", "0") or 0)
+            properties_json = request.form.get("properties_json", "").strip()
+            query_type = request.form.get("query_type", "address")
+
+            if not properties_json:
+                error = "Missing property data. Please run a property search first."
+            elif not property_question:
+                error = "Please enter a question for the selected property."
+            else:
+                try:
+                    properties = json.loads(properties_json)
+                    if selected_property_index < 0 or selected_property_index >= len(properties):
+                        raise IndexError("Invalid property selection.")
+                    selected_property = properties[selected_property_index]
+
+                    from light_rag_impl import query_property
+                    rag_answer = query_property(property_question, selected_property)
+                except Exception as e:
+                    error = f"Error querying RAG: {str(e)}"
+
+            return render_template(
+                "index.html",
+                properties=properties,
+                error=error,
+                address=address,
+                zip=zip_code,
+                num=num,
+                base_zones=base_zones,
+                min_sqft=min_sqft,
+                query_type=query_type,
+                rag_answer=rag_answer,
+                property_question=property_question,
+                selected_property_index=selected_property_index,
+            )
+
+        query_type = request.form.get("query_type", "address")
+        if query_type == "address":
+            address = request.form.get("address", "").strip()
+            if not address:
+                error = "Please enter an address."
+            else:
+                try:
+                    from zoning import query_property_by_address
+                    properties = [query_property_by_address(address)]
+                except Exception as e:
+                    error = f"Error querying address: {str(e)}"
         else:
+            zip_code = request.form.get("zip", "").strip()
             try:
-                oa, pc = make_clients()
-                hits = retrieve(question, pc, oa, k=6)
-                raw_answer = answer(question, hits, oa)
-                
-                # Convert Markdown to HTML
-                # 'fenced_code' and 'tables' are good extensions for RAG
-                answer_text = markdown.markdown(raw_answer, extensions=['fenced_code', 'tables'])
-                
-            except Exception as e:
-                error = f"Error: {e}"
-    return render_template("index.html", answer=answer_text, error=error, question=question)
+                num = int(request.form.get("num", 10))
+            except ValueError:
+                num = 10
+            base_zones = request.form.getlist("base_zones")
+            min_sqft_str = request.form.get("min_sqft", "").strip()
+            try:
+                min_sqft = int(min_sqft_str) if min_sqft_str else None
+            except ValueError:
+                min_sqft = None
+            if not zip_code:
+                error = "Please enter a ZIP code."
+            else:
+                try:
+                    from zoning import query_properties_by_zip
+                    properties = query_properties_by_zip(
+                        zip_code,
+                        num,
+                        base_zones=base_zones,
+                        min_sqft=min_sqft,
+                    )
+                    if not properties:
+                        error = "No properties found for this ZIP code (or none match the filters)."
+                except Exception as e:
+                    error = f"Error: {str(e)}"
+
+    return render_template(
+        "index.html",
+        properties=properties,
+        error=error,
+        address=address,
+        zip=zip_code,
+        num=num,
+        base_zones=base_zones,
+        min_sqft=min_sqft,
+        query_type=query_type,
+        rag_answer=rag_answer,
+        property_question=property_question,
+        selected_property_index=selected_property_index,
+    )
 
 if __name__ == "__main__":
-    # Default to localhost:5000. Debug mode is helpful for local development.
-    app.run(host="127.0.0.1", port=5000, debug=True)
+    # Default to listening on all interfaces to avoid host header issues locally.
+    # Keep debug on for local development, but bind to 0.0.0.0 so requests from
+    # different hostnames (e.g., localhost vs 127.0.0.1) don't get blocked.
+    app.run(host="0.0.0.0", port=5001, debug=True, threaded=True)
