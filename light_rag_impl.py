@@ -4,6 +4,8 @@ import json
 import threading
 import logging
 import importlib
+import requests
+from urllib.parse import urlparse
 from pathlib import Path
 from supabase_store import store_rag_result, maybe_clear_local_cache
 
@@ -104,6 +106,34 @@ def _get_rag():
     return _rag
 
 
+def _ensure_docs_available() -> Path:
+    if DOC_DIR.exists() and any(DOC_DIR.glob("*.pdf")):
+        return DOC_DIR
+
+    urls_raw = os.getenv("RAG_DOC_URLS", "")
+    urls = [u.strip() for u in urls_raw.split(",") if u.strip()]
+    if not urls:
+        logger.warning("No PDFs found in %s and RAG_DOC_URLS not set.", DOC_DIR)
+        return DOC_DIR
+
+    download_dir = Path(os.getenv("RAG_DOC_DIR", "/tmp/rag_docs" if _vercel_env else str(BASE_DIR / "docs")))
+    download_dir.mkdir(parents=True, exist_ok=True)
+
+    for idx, url in enumerate(urls, start=1):
+        try:
+            filename = Path(urlparse(url).path).name or f"doc_{idx}.pdf"
+            target = download_dir / filename
+            if target.exists():
+                continue
+            resp = requests.get(url, timeout=30)
+            resp.raise_for_status()
+            target.write_bytes(resp.content)
+        except Exception:
+            logger.exception("Failed to download RAG doc: %s", url)
+
+    return download_dir
+
+
 def _run_loop() -> None:
     global _loop
     loop = asyncio.new_event_loop()
@@ -133,19 +163,27 @@ def _run_coroutine(coro):
     return future.result()
 
 
-async def ingest_documents():
+async def ingest_documents(doc_dir: Path | None = None) -> int:
     """Reads PDFs and inserts them into the graph."""
     from pypdf import PdfReader
-    if not DOC_DIR.exists():
-        logger.warning("Docs directory not found: %s", DOC_DIR)
-        return
+    doc_dir = doc_dir or DOC_DIR
+    if not doc_dir.exists():
+        logger.warning("Docs directory not found: %s", doc_dir)
+        return 0
+    files = list(doc_dir.glob("*.pdf"))
+    if not files:
+        logger.warning("No PDF files found in: %s", doc_dir)
+        return 0
     rag = _get_rag()
-    for file_path in DOC_DIR.glob("*.pdf"):
+    inserted = 0
+    for file_path in files:
         print(f"Extracting and Graphing: {file_path.name}...")
         reader = PdfReader(file_path)
         text = " ".join([page.extract_text() for page in reader.pages if page.extract_text()])
         if text.strip():
             await rag.ainsert(text)
+            inserted += 1
+    return inserted
 
 async def main():
     # These two lines initialize the async locks that are currently failing
@@ -186,7 +224,10 @@ async def ensure_ready() -> None:
         await rag.initialize_storages()
         await initialize_pipeline_status()
         if not any(Path(WORKING_DIR).iterdir()):
-            await ingest_documents()
+            doc_dir = _ensure_docs_available()
+            inserted = await ingest_documents(doc_dir)
+            if inserted == 0:
+                logger.warning("No documents ingested; RAG will return [no-context].")
         _initialized = True
 
 
