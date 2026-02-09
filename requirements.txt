@@ -7,3 +7,4 @@ requests
 geopy
 lightrag-hku
 python-dotenv
+gunicorn

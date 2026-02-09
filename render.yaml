@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: portland-rag-service
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn rag_service:app
+    envVars:
+      - key: RAG_API_TOKEN
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: RAG_DOC_URLS
+        sync: false

@@ -8,6 +8,8 @@ Allows querying single addresses or multiple properties by ZIP code.
 from flask import Flask, render_template, request
 import logging
 import json
+import os
+import requests
 from dotenv import load_dotenv
 from light_rag_impl import start_background_init
 
@@ -20,7 +22,27 @@ app = Flask(__name__)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-start_background_init()
+RAG_API_URL = os.getenv("RAG_API_URL", "").strip()
+RAG_API_TOKEN = os.getenv("RAG_API_TOKEN", "").strip()
+
+if not RAG_API_URL:
+    try:
+        from light_rag_impl import start_background_init
+        start_background_init()
+    except Exception:
+        logger.exception("Failed to initialize local RAG. Set RAG_API_URL to use remote RAG.")
+
+
+def _call_rag_remote(question: str, property_data: dict) -> str:
+    endpoint = f"{RAG_API_URL.rstrip('/')}/rag/query"
+    headers = {"Content-Type": "application/json"}
+    if RAG_API_TOKEN:
+        headers["Authorization"] = f"Bearer {RAG_API_TOKEN}"
+    payload = {"question": question, "property": property_data}
+    resp = requests.post(endpoint, json=payload, headers=headers, timeout=45)
+    resp.raise_for_status()
+    data = resp.json()
+    return data.get("answer", "")
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -56,8 +78,11 @@ def index():
                         raise IndexError("Invalid property selection.")
                     selected_property = properties[selected_property_index]
 
-                    from light_rag_impl import query_property
-                    rag_answer = query_property(property_question, selected_property)
+                    if RAG_API_URL:
+                        rag_answer = _call_rag_remote(property_question, selected_property)
+                    else:
+                        from light_rag_impl import query_property
+                        rag_answer = query_property(property_question, selected_property)
                 except Exception as e:
                     error = f"Error querying RAG: {str(e)}"
 
