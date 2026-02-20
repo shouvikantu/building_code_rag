@@ -1,12 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Portland Zoning Intelligence</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap"
+        rel="stylesheet">
     <style>
         :root {
             --primary: #0f172a;
@@ -25,8 +28,10 @@
             --radius: 0.75rem;
         }
 
-        * { box-sizing: border-box; }
-        
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             font-family: 'Inter', sans-serif;
             background-color: var(--bg);
@@ -36,7 +41,12 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        h1, h2, h3, h4, h5, h6 {
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
             font-family: 'Space Grotesk', sans-serif;
             color: var(--text-heading);
             margin-top: 0;
@@ -53,7 +63,7 @@
             margin-bottom: 3rem;
             text-align: center;
         }
-        
+
         header h1 {
             font-size: 2.5rem;
             letter-spacing: -0.02em;
@@ -139,7 +149,9 @@
             transition: border-color 0.15s, box-shadow 0.15s;
         }
 
-        input:focus, select:focus, textarea:focus {
+        input:focus,
+        select:focus,
+        textarea:focus {
             outline: none;
             border-color: var(--accent);
             box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
@@ -171,12 +183,12 @@
             display: none;
         }
 
-        .radio-pills input:checked + span {
+        .radio-pills input:checked+span {
             background: var(--surface);
             color: var(--accent);
             box-shadow: var(--shadow-sm);
         }
-        
+
         .radio-pills span {
             display: block;
             padding: 0.375rem;
@@ -208,18 +220,18 @@
             opacity: 0.7;
             cursor: not-allowed;
         }
-        
+
         .btn-secondary {
             background-color: var(--primary);
         }
-        
+
         .btn-secondary:hover {
             background-color: var(--primary-light);
         }
 
         /* Loading Spinner */
         .spinner {
-            border: 3px solid rgba(255,255,255,0.3);
+            border: 3px solid rgba(255, 255, 255, 0.3);
             border-radius: 50%;
             border-top: 3px solid #ffffff;
             width: 20px;
@@ -233,7 +245,15 @@
             display: inline-block;
         }
 
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
 
         /* Results Area */
         .results-section {
@@ -259,7 +279,7 @@
         .meta-item {
             font-size: 0.875rem;
         }
-        
+
         .meta-label {
             color: var(--muted);
             font-size: 0.75rem;
@@ -267,7 +287,7 @@
             letter-spacing: 0.05em;
             margin-bottom: 0.125rem;
         }
-        
+
         .meta-value {
             font-weight: 600;
             color: var(--text-heading);
@@ -299,7 +319,7 @@
             border-left: 4px solid var(--accent);
             box-shadow: var(--shadow-sm);
         }
-        
+
         .error-message {
             background: #fef2f2;
             color: #991b1b;
@@ -313,19 +333,20 @@
         .table-responsive {
             overflow-x: auto;
         }
-        
+
         table {
             width: 100%;
             border-collapse: collapse;
             font-size: 0.875rem;
         }
-        
-        th, td {
+
+        th,
+        td {
             padding: 0.75rem 1rem;
             text-align: left;
             border-bottom: 1px solid var(--border);
         }
-        
+
         th {
             background: #f8fafc;
             font-weight: 600;
@@ -335,13 +356,18 @@
             letter-spacing: 0.05em;
         }
 
-        tr:last-child td { border-bottom: none; }
-        
+        tr:last-child td {
+            border-bottom: none;
+        }
+
         /* Loading Overlay */
         #loading-overlay {
             position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(255,255,255,0.8);
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.8);
             backdrop-filter: blur(4px);
             z-index: 50;
             display: flex;
@@ -352,12 +378,12 @@
             pointer-events: none;
             transition: opacity 0.3s;
         }
-        
+
         #loading-overlay.active {
             opacity: 1;
             pointer-events: all;
         }
-        
+
         .loading-content {
             background: white;
             padding: 2rem;
@@ -366,7 +392,7 @@
             text-align: center;
             border: 1px solid var(--border);
         }
-        
+
         .loading-spinner-lg {
             border: 4px solid #f3f3f3;
             border-top: 4px solid var(--accent);
@@ -376,128 +402,138 @@
             animation: spin 1s linear infinite;
             margin: 0 auto 1rem;
         }
-
     </style>
 </head>
+
 <body>
 
-<div id="loading-overlay">
-    <div class="loading-content">
-        <div class="loading-spinner-lg"></div>
-        <h3 id="loading-text">Processing...</h3>
-        <p class="text-sm text-muted">This may take a moment</p>
+    <div id="loading-overlay">
+        <div class="loading-content">
+            <div class="loading-spinner-lg"></div>
+            <h3 id="loading-text">Processing...</h3>
+            <p class="text-sm text-muted">This may take a moment</p>
+        </div>
     </div>
-</div>
 
-<div class="container">
-    <header>
-        <h1>Portland Zoning Intelligence</h1>
-        <p>Instant zoning data and AI-powered regulatory insights for real estate professionals.</p>
-    </header>
+    <div class="container">
+        <header>
+            <h1>Portland Zoning Intelligence</h1>
+            <p>Instant zoning data and AI-powered regulatory insights for real estate professionals.</p>
+        </header>
 
-    {% if error %}
-    <div class="error-message">
-        <strong>Error:</strong> {{ error }}
-    </div>
-    {% endif %}
+        {% if error %}
+        <div class="error-message">
+            <strong>Error:</strong> {{ error }}
+        </div>
+        {% endif %}
 
-    <div class="grid">
-        <!-- Sidebar / Search -->
-        <aside>
-            <div class="card">
-                <div class="card-header">
-                    <h2>Property Lookup</h2>
+        <div class="grid">
+            <!-- Sidebar / Search -->
+            <aside>
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Property Lookup</h2>
+                    </div>
+                    <div class="card-body">
+                        <form id="search-form" method="POST">
+                            <div class="radio-pills">
+                                <label>
+                                    <input type="radio" name="query_type" value="address" onchange="toggleForm()" {% if
+                                        query_type !='zip' %}checked{% endif %}>
+                                    <span>Address</span>
+                                </label>
+                                <label>
+                                    <input type="radio" name="query_type" value="zip" onchange="toggleForm()" {% if
+                                        query_type=='zip' %}checked{% endif %}>
+                                    <span>ZIP Code</span>
+                                </label>
+                            </div>
+
+                            <div id="address-fields">
+                                <div class="form-group">
+                                    <label for="address">Property Address</label>
+                                    <input type="text" id="address" name="address" placeholder="e.g. 1944 NE Sandy Blvd"
+                                        value="{{ address }}">
+                                </div>
+                            </div>
+
+                            <div id="zip-fields" style="display: none;">
+                                <div class="form-group">
+                                    <label for="zip">ZIP Code</label>
+                                    <input type="text" id="zip" name="zip" placeholder="e.g. 97232" value="{{ zip }}">
+                                </div>
+                                <div class="form-group">
+                                    <label for="num">Max Results</label>
+                                    <input type="number" id="num" name="num" value="{{ num or 10 }}" min="1" max="50">
+                                </div>
+                                <div class="form-group">
+                                    <label for="min_sqft">Min Sq Ft (Optional)</label>
+                                    <input type="number" id="min_sqft" name="min_sqft" value="{{ min_sqft }}">
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn" id="search-btn">
+                                <span class="spinner"></span>
+                                Search Records
+                            </button>
+                        </form>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <form id="search-form" method="POST">
-                        <div class="radio-pills">
-                            <label>
-                                <input type="radio" name="query_type" value="address" onchange="toggleForm()" {% if query_type != 'zip' %}checked{% endif %}>
-                                <span>Address</span>
-                            </label>
-                            <label>
-                                <input type="radio" name="query_type" value="zip" onchange="toggleForm()" {% if query_type == 'zip' %}checked{% endif %}>
-                                <span>ZIP Code</span>
-                            </label>
-                        </div>
 
-                        <div id="address-fields">
-                            <div class="form-group">
-                                <label for="address">Property Address</label>
-                                <input type="text" id="address" name="address" placeholder="e.g. 1944 NE Sandy Blvd" value="{{ address }}">
-                            </div>
-                        </div>
-
-                        <div id="zip-fields" style="display: none;">
-                            <div class="form-group">
-                                <label for="zip">ZIP Code</label>
-                                <input type="text" id="zip" name="zip" placeholder="e.g. 97232" value="{{ zip }}">
-                            </div>
-                            <div class="form-group">
-                                <label for="num">Max Results</label>
-                                <input type="number" id="num" name="num" value="{{ num or 10 }}" min="1" max="50">
-                            </div>
-                            <div class="form-group">
-                                <label for="min_sqft">Min Sq Ft (Optional)</label>
-                                <input type="number" id="min_sqft" name="min_sqft" value="{{ min_sqft }}">
-                            </div>
-                        </div>
-
-                        <button type="submit" class="btn" id="search-btn">
-                            <span class="spinner"></span>
-                            Search Records
-                        </button>
-                    </form>
+                <div class="card" style="margin-top: 1.5rem; background-color: #f1f5f9; border: none;">
+                    <div class="card-body">
+                        <h4 style="font-size: 1rem; margin-bottom: 0.5rem;">Quick Tips</h4>
+                        <ul
+                            style="padding-left: 1.25rem; margin: 0; color: var(--muted); font-size: 0.875rem; list-style-type: circle;">
+                            <li style="margin-bottom: 0.5rem;">Use standard formatting for addresses (e.g. N, NE, SW).
+                            </li>
+                            <li style="margin-bottom: 0.5rem;">For RAG questions, be specific about the use case (e.g.
+                                "Can I build a duplex?").</li>
+                        </ul>
+                    </div>
                 </div>
-            </div>
-            
-            <div class="card" style="margin-top: 1.5rem; background-color: #f1f5f9; border: none;">
-                <div class="card-body">
-                    <h4 style="font-size: 1rem; margin-bottom: 0.5rem;">Quick Tips</h4>
-                    <ul style="padding-left: 1.25rem; margin: 0; color: var(--muted); font-size: 0.875rem; list-style-type: circle;">
-                        <li style="margin-bottom: 0.5rem;">Use standard formatting for addresses (e.g. N, NE, SW).</li>
-                        <li style="margin-bottom: 0.5rem;">For RAG questions, be specific about the use case (e.g. "Can I build a duplex?").</li>
-                    </ul>
-                </div>
-            </div>
-        </aside>
+            </aside>
 
-        <!-- Main Content -->
-        <main class="results-section">
-            {% if properties %}
-            
+            <!-- Main Content -->
+            <main class="results-section">
+                {% if properties %}
+
                 <!-- Properties List -->
                 <div class="card">
-                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
-                        <h2>Found {{ properties|length }} Propert{% if properties|length != 1 %}ies{% else %}y{% endif %}</h2>
+                    <div class="card-header"
+                        style="display: flex; justify-content: space-between; align-items: center;">
+                        <h2>Found {{ properties|length }} Propert{% if properties|length != 1 %}ies{% else %}y{% endif
+                            %}</h2>
                         <span class="badge">Live Data</span>
                     </div>
                     <div class="table-responsive">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Address</th>
-                                <th>Zone</th>
-                                <th>Year</th>
-                                <th>Sq Ft</th>
-                                <th>Units</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for prop in properties %}
-                            <tr>
-                                <td style="font-weight: 500;">
-                                    {{ prop.get('Address') or prop.get('Building Address') }}<br>
-                                    <span style="font-size: 0.75rem; color: var(--muted); font-weight: 400;">{{ prop.get('Taxlot ID') }}</span>
-                                </td>
-                                <td><span class="badge" style="background: #f1f5f9; color: var(--text);">{{ prop.get('Base Zone') }}</span></td>
-                                <td>{{ prop.get('Year Built') }}</td>
-                                <td>{{ prop.get('Square Footage') }}</td>
-                                <td>{{ prop.get('Residential Units') }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Address</th>
+                                    <th>Zone</th>
+                                    <th>Year</th>
+                                    <th>Sq Ft</th>
+                                    <th>Units</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for prop in properties %}
+                                <tr>
+                                    <td style="font-weight: 500;">
+                                        {{ prop.get('Address') or prop.get('Building Address') }}<br>
+                                        <span style="font-size: 0.75rem; color: var(--muted); font-weight: 400;">{{
+                                            prop.get('Taxlot ID') }}</span>
+                                    </td>
+                                    <td><span class="badge" style="background: #f1f5f9; color: var(--text);">{{
+                                            prop.get('Base Zone') }}</span></td>
+                                    <td>{{ prop.get('Year Built') }}</td>
+                                    <td>{{ prop.get('Square Footage') }}</td>
+                                    <td>{{ prop.get('Residential Units') }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 
@@ -505,30 +541,34 @@
                 <div class="card" style="border-color: var(--accent);">
                     <div class="card-header" style="background: #eff6ff; border-bottom-color: #dbeafe;">
                         <h2 style="color: var(--accent-hover);">AI Zoning Analyst</h2>
-                        <p style="margin: 0.5rem 0 0; font-size: 0.875rem; color: var(--muted);">Select a property to ask specific code compliance questions.</p>
+                        <p style="margin: 0.5rem 0 0; font-size: 0.875rem; color: var(--muted);">Select a property to
+                            ask specific code compliance questions.</p>
                     </div>
                     <div class="card-body">
                         <form method="POST" id="rag-form">
                             <input type="hidden" name="action" value="rag">
                             <input type="hidden" name="query_type" value="{{ query_type }}">
                             <input type="hidden" name="properties_json" value='{{ properties|tojson }}'>
-                            
+
                             <div class="grid" style="grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1rem;">
                                 <div class="form-group">
                                     <label for="property_index">Target Property</label>
                                     <select name="property_index" id="property_index">
                                         {% for prop in properties %}
-                                        <option value="{{ loop.index0 }}" {% if selected_property_index == loop.index0 %}selected{% endif %}>
-                                            {{ prop.get('Address') or prop.get('Building Address') }} ({{ prop.get('Base Zone') }})
+                                        <option value="{{ loop.index0 }}" {% if selected_property_index==loop.index0
+                                            %}selected{% endif %}>
+                                            {{ prop.get('Address') or prop.get('Building Address') }} ({{ prop.get('Base
+                                            Zone') }})
                                         </option>
                                         {% endfor %}
                                     </select>
                                 </div>
                             </div>
-                            
+
                             <div class="form-group">
                                 <label for="property_question">Regulatory Question</label>
-                                <textarea name="property_question" id="property_question" rows="3" placeholder="Example: What are the setbacks for a detached ADU in this zone?">{{ property_question }}</textarea>
+                                <textarea name="property_question" id="property_question" rows="3"
+                                    placeholder="Example: What are the setbacks for a detached ADU in this zone?">{{ property_question }}</textarea>
                             </div>
 
                             <button type="submit" class="btn btn-secondary" id="ask-btn">
@@ -540,70 +580,146 @@
                         {% if rag_answer %}
                         <div class="chat-response">
                             <h3 style="font-size: 1.1rem; margin-bottom: 1rem;">Analysis Result</h3>
-                            <div style="white-space: pre-wrap; color: var(--text);">{{ rag_answer }}</div>
+                            <div id="rag-raw-content" style="display: none;">{{ rag_answer }}</div>
+                            <div id="rag-rendered-content" class="markdown-body" style="color: var(--text);"></div>
                         </div>
+                        <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+                        <script>
+                            document.addEventListener("DOMContentLoaded", function () {
+                                const rawContent = document.getElementById("rag-raw-content");
+                                const renderedContent = document.getElementById("rag-rendered-content");
+                                if (rawContent && renderedContent) {
+                                    // Parse markdown and render as HTML
+                                    renderedContent.innerHTML = marked.parse(rawContent.textContent || rawContent.innerText);
+                                }
+                            });
+                        </script>
+                        <style>
+                            .markdown-body p {
+                                margin-top: 0;
+                                margin-bottom: 1rem;
+                            }
+
+                            .markdown-body ul {
+                                margin-top: 0;
+                                margin-bottom: 1rem;
+                                padding-left: 1.5rem;
+                            }
+
+                            .markdown-body li {
+                                margin-bottom: 0.5rem;
+                            }
+
+                            .markdown-body strong {
+                                font-weight: 600;
+                                color: var(--text-heading);
+                            }
+
+                            .markdown-body h1,
+                            .markdown-body h2,
+                            .markdown-body h3,
+                            .markdown-body h4 {
+                                margin-top: 1.5rem;
+                                margin-bottom: 1rem;
+                            }
+
+                            .markdown-body code {
+                                background: #f1f5f9;
+                                padding: 0.2rem 0.4rem;
+                                border-radius: 0.25rem;
+                                font-size: 0.875em;
+                            }
+
+                            .markdown-body pre {
+                                background: #f1f5f9;
+                                padding: 1rem;
+                                border-radius: 0.5rem;
+                                overflow-x: auto;
+                                margin-bottom: 1rem;
+                            }
+
+                            .markdown-body pre code {
+                                background: transparent;
+                                padding: 0;
+                            }
+
+                            .markdown-body blockquote {
+                                border-left: 4px solid var(--border);
+                                margin: 0 0 1rem;
+                                padding-left: 1rem;
+                                color: var(--muted);
+                            }
+                        </style>
                         {% endif %}
                     </div>
                 </div>
 
-            {% else %}
+                {% else %}
                 <!-- Empty State -->
                 <div class="card" style="text-align: center; padding: 4rem 2rem;">
-                    <div style="background: #f1f5f9; width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
-                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--muted);"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <div
+                        style="background: #f1f5f9; width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            style="color: var(--muted);">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
                     </div>
                     <h2 style="color: var(--muted);">No records loaded</h2>
-                    <p style="color: var(--muted); max-width: 400px; margin: 0 auto;">Use the sidebar to search for a specific property address or explore an entire ZIP code to get started.</p>
+                    <p style="color: var(--muted); max-width: 400px; margin: 0 auto;">Use the sidebar to search for a
+                        specific property address or explore an entire ZIP code to get started.</p>
                 </div>
-            {% endif %}
-        </main>
+                {% endif %}
+            </main>
+        </div>
     </div>
-</div>
 
-<script>
-    function toggleForm() {
-        const type = document.querySelector('input[name="query_type"]:checked').value;
-        const addrFields = document.getElementById('address-fields');
-        const zipFields = document.getElementById('zip-fields');
-        
-        if (type === 'zip') {
-            addrFields.style.display = 'none';
-            zipFields.style.display = 'block';
-        } else {
-            addrFields.style.display = 'block';
-            zipFields.style.display = 'none';
+    <script>
+        function toggleForm() {
+            const type = document.querySelector('input[name="query_type"]:checked').value;
+            const addrFields = document.getElementById('address-fields');
+            const zipFields = document.getElementById('zip-fields');
+
+            if (type === 'zip') {
+                addrFields.style.display = 'none';
+                zipFields.style.display = 'block';
+            } else {
+                addrFields.style.display = 'block';
+                zipFields.style.display = 'none';
+            }
         }
-    }
 
-    // Initialize state
-    toggleForm();
+        // Initialize state
+        toggleForm();
 
-    // Loading States
-    const searchForm = document.getElementById('search-form');
-    const searchBtn = document.getElementById('search-btn');
-    const ragForm = document.getElementById('rag-form');
-    const askBtn = document.getElementById('ask-btn');
-    const overlay = document.getElementById('loading-overlay');
-    const loadingText = document.getElementById('loading-text');
+        // Loading States
+        const searchForm = document.getElementById('search-form');
+        const searchBtn = document.getElementById('search-btn');
+        const ragForm = document.getElementById('rag-form');
+        const askBtn = document.getElementById('ask-btn');
+        const overlay = document.getElementById('loading-overlay');
+        const loadingText = document.getElementById('loading-text');
 
-    if (searchForm) {
-        searchForm.addEventListener('submit', function() {
-            searchBtn.classList.add('loading');
-            searchBtn.disabled = true;
-            overlay.classList.add('active');
-            loadingText.textContent = "Fetching Property Data...";
-        });
-    }
+        if (searchForm) {
+            searchForm.addEventListener('submit', function () {
+                searchBtn.classList.add('loading');
+                searchBtn.disabled = true;
+                overlay.classList.add('active');
+                loadingText.textContent = "Fetching Property Data...";
+            });
+        }
 
-    if (ragForm) {
-        ragForm.addEventListener('submit', function() {
-            askBtn.classList.add('loading');
-            askBtn.disabled = true;
-            overlay.classList.add('active');
-            loadingText.textContent = "Analyzing Regulations...";
-        });
-    }
-</script>
+        if (ragForm) {
+            ragForm.addEventListener('submit', function () {
+                askBtn.classList.add('loading');
+                askBtn.disabled = true;
+                overlay.classList.add('active');
+                loadingText.textContent = "Analyzing Regulations...";
+            });
+        }
+    </script>
 
 </body>
+
 </html>
