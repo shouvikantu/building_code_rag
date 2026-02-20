@@ -1,562 +1,609 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Portland Zoning Query</title>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portland Zoning Intelligence</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
     <style>
-      @import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap");
-      :root {
-        --bg: #f6f7fb;
-        --bg-accent: #eef2ff;
-        --surface: #ffffff;
-        --surface-alt: #f0f6ff;
-        --text: #0f172a;
-        --muted: #5b667a;
-        --accent: #0a7a7e;
-        --accent-strong: #086368;
-        --danger: #b42318;
-        --border: #e2e8f0;
-        --shadow: 0 18px 50px rgba(15, 23, 42, 0.12);
-        --shadow-soft: 0 8px 24px rgba(15, 23, 42, 0.08);
-        --radius: 16px;
-      }
-      body {
-        font-family: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system,
-          "Segoe UI", "Helvetica Neue", Arial;
-        background: radial-gradient(circle at top right, #e5f4f1, transparent 45%),
-          radial-gradient(circle at 15% 20%, #dfe7ff, transparent 40%),
-          var(--bg);
-        color: var(--text);
-        margin: 0;
-        padding: 2.5rem 1.5rem 4rem;
-      }
-      .container {
-        max-width: 1100px;
-        margin: 0 auto;
-      }
-      .header {
-        display: grid;
-        grid-template-columns: auto 1fr;
-        gap: 1.5rem;
-        align-items: center;
-        margin-bottom: 2rem;
-      }
-      .logo {
-        width: 60px;
-        height: 60px;
-        border-radius: 18px;
-        background: linear-gradient(135deg, #0f766e, #38b2ac);
-        display: inline-block;
-        box-shadow: var(--shadow-soft);
-      }
-      h1 {
-        margin: 0;
-        font-family: "Space Grotesk", "IBM Plex Sans", sans-serif;
-        font-size: 2rem;
-        letter-spacing: -0.02em;
-      }
-      p.lead {
-        margin: 0.35rem 0 0;
-        color: var(--muted);
-        font-size: 1rem;
-      }
-
-      .card {
-        background: var(--surface);
-        border-radius: var(--radius);
-        box-shadow: var(--shadow);
-        padding: 1.5rem 1.75rem;
-        margin-top: 1rem;
-        border: 1px solid rgba(226, 232, 240, 0.6);
-      }
-      .card-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 1rem;
-      }
-      .card-title {
-        font-family: "Space Grotesk", "IBM Plex Sans", sans-serif;
-        font-size: 1.25rem;
-        margin: 0;
-      }
-      .card-subtitle {
-        margin: 0.2rem 0 0;
-        color: var(--muted);
-        font-size: 0.95rem;
-      }
-      label {
-        display: block;
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-      }
-      input, select, textarea {
-        width: 100%;
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 0.75rem 0.85rem;
-        font-size: 0.95rem;
-        background: #ffffff;
-        color: var(--text);
-        transition: border-color 0.2s ease, box-shadow 0.2s ease;
-      }
-      input:focus-visible, select:focus-visible, textarea:focus-visible {
-        outline: none;
-        border-color: var(--accent);
-        box-shadow: 0 0 0 3px rgba(10, 122, 126, 0.2);
-      }
-      .input-group {
-        margin-bottom: 1rem;
-      }
-      .input-row {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-        gap: 1rem;
-      }
-      .radio-group {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 0.75rem;
-        margin-bottom: 1.25rem;
-      }
-      .radio-option {
-        background: var(--surface-alt);
-        border: 1px solid transparent;
-        border-radius: 12px;
-        padding: 0.75rem 0.9rem;
-        display: flex;
-        gap: 0.6rem;
-        align-items: center;
-        transition: border-color 0.2s ease, transform 0.2s ease;
-      }
-      .radio-option input {
-        accent-color: var(--accent);
-      }
-      .radio-option span {
-        font-weight: 600;
-        font-size: 0.95rem;
-      }
-      .radio-option small {
-        display: block;
-        color: var(--muted);
-        font-weight: 400;
-        font-size: 0.85rem;
-      }
-
-      .controls {
-        display: flex;
-        gap: 0.5rem;
-        align-items: center;
-        margin-top: 1rem;
-      }
-      button.btn {
-        background: var(--accent);
-        color: white;
-        border: none;
-        padding: 0.65rem 1.2rem;
-        border-radius: 12px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
-        box-shadow: 0 10px 20px rgba(10, 122, 126, 0.22);
-      }
-      button.btn:hover {
-        transform: translateY(-1px);
-        background: var(--accent-strong);
-      }
-      button.btn.secondary {
-        background: #0f172a;
-        box-shadow: 0 10px 20px rgba(15, 23, 42, 0.2);
-      }
-      button.btn:disabled {
-        opacity: 0.6;
-        cursor: default;
-        transform: none;
-      }
-      .muted {
-        color: var(--muted);
-        font-size: 0.9rem;
-      }
-
-      .status {
-        margin-left: 0.75rem;
-        color: var(--muted);
-        font-weight: 600;
-      }
-      .error {
-        color: var(--danger);
-        background: #fff1f0;
-        padding: 0.9rem 1rem;
-        border-radius: 12px;
-        margin-bottom: 1rem;
-        border: 1px solid rgba(180, 35, 24, 0.25);
-      }
-
-      .table-container {
-        overflow-x: auto;
-        margin-top: 1rem;
-        border-radius: 14px;
-        border: 1px solid var(--border);
-      }
-      .data-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.9rem;
-        min-width: 820px;
-      }
-      .data-table th, .data-table td {
-        padding: 0.5rem;
-        text-align: left;
-        border-bottom: 1px solid #e6e9ee;
-      }
-      .data-table th {
-        background: #f8fafc;
-        font-weight: 600;
-        color: #0f172a;
-      }
-      .section-title {
-        font-family: "Space Grotesk", "IBM Plex Sans", sans-serif;
-        font-size: 1.4rem;
-        margin: 2rem 0 0.6rem;
-      }
-      .section-note {
-        margin: 0 0 1rem;
-        color: var(--muted);
-      }
-      .pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.4rem;
-        background: #e2f3f1;
-        color: var(--accent-strong);
-        font-weight: 600;
-        border-radius: 999px;
-        padding: 0.35rem 0.75rem;
-        font-size: 0.85rem;
-      }
-      .results-card {
-        background: var(--surface);
-        border-radius: var(--radius);
-        border: 1px solid rgba(226, 232, 240, 0.7);
-        padding: 1.5rem;
-        margin-top: 1.5rem;
-        box-shadow: var(--shadow-soft);
-      }
-      .grid {
-        display: grid;
-        gap: 1.5rem;
-      }
-      @media (min-width: 960px) {
-        .grid {
-          grid-template-columns: 1.2fr 1fr;
-          align-items: start;
+        :root {
+            --primary: #0f172a;
+            --primary-light: #1e293b;
+            --accent: #2563eb;
+            --accent-hover: #1d4ed8;
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --border: #e2e8f0;
+            --text: #334155;
+            --text-heading: #0f172a;
+            --muted: #64748b;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --radius: 0.75rem;
         }
-      }
 
-      /* simple spinner */
-      .spinner {
-        width: 18px;
-        height: 18px;
-        border-radius: 50%;
-        display: inline-block;
-        border: 3px solid rgba(255, 255, 255, 0.35);
-        border-top-color: rgba(255, 255, 255, 0.9);
-        animation: spin 1s linear infinite;
-        vertical-align: middle;
-        margin-right: 0.5rem;
-      }
-      @keyframes spin {
-        to {
-          transform: rotate(360deg);
-        }
-      }
-      @media (max-width: 720px) {
+        * { box-sizing: border-box; }
+        
         body {
-          padding: 1.5rem 1rem 3rem;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
         }
-        .header {
-          grid-template-columns: 1fr;
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Space Grotesk', sans-serif;
+            color: var(--text-heading);
+            margin-top: 0;
         }
-        .logo {
-          width: 52px;
-          height: 52px;
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
         }
+
+        /* Header */
+        header {
+            margin-bottom: 3rem;
+            text-align: center;
+        }
+        
+        header h1 {
+            font-size: 2.5rem;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--text-heading), var(--muted));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        header p {
+            font-size: 1.125rem;
+            color: var(--muted);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Layout */
+        .grid {
+            display: grid;
+            gap: 2rem;
+            grid-template-columns: 1fr;
+        }
+
+        @media (min-width: 1024px) {
+            .grid {
+                grid-template-columns: 350px 1fr;
+                align-items: start;
+            }
+        }
+
+        /* Cards */
         .card {
-          padding: 1.25rem;
+            background: var(--surface);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
-      }
+
+        .card:hover {
+            box-shadow: var(--shadow-lg);
+        }
+
+        .card-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            background: #f8fafc;
+        }
+
+        .card-header h2 {
+            font-size: 1.25rem;
+            margin: 0;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: var(--text-heading);
+            font-size: 0.875rem;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        /* Toggle Switches / Radio Cards */
+        .radio-pills {
+            display: flex;
+            background: #f1f5f9;
+            padding: 0.25rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .radio-pills label {
+            flex: 1;
+            text-align: center;
+            padding: 0.5rem;
+            margin: 0;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            color: var(--muted);
+        }
+
+        .radio-pills input {
+            display: none;
+        }
+
+        .radio-pills input:checked + span {
+            background: var(--surface);
+            color: var(--accent);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .radio-pills span {
+            display: block;
+            padding: 0.375rem;
+            border-radius: 0.375rem;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 0.75rem 1.5rem;
+            background-color: var(--accent);
+            color: white;
+            font-weight: 600;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: background-color 0.15s;
+            font-size: 1rem;
+        }
+
+        .btn:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+        
+        .btn-secondary {
+            background-color: var(--primary);
+        }
+        
+        .btn-secondary:hover {
+            background-color: var(--primary-light);
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top: 3px solid #ffffff;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            margin-right: 0.5rem;
+            display: none;
+        }
+
+        .btn.loading .spinner {
+            display: inline-block;
+        }
+
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Results Area */
+        .results-section {
+            display: grid;
+            gap: 2rem;
+        }
+
+        .property-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            position: relative;
+        }
+
+        .property-meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .meta-item {
+            font-size: 0.875rem;
+        }
+        
+        .meta-label {
+            color: var(--muted);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.125rem;
+        }
+        
+        .meta-value {
+            font-weight: 600;
+            color: var(--text-heading);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            background: #e0f2fe;
+            color: #0369a1;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        /* RAG Section */
+        .rag-chat {
+            background: #f1f5f9;
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .chat-response {
+            background: var(--surface);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            border-left: 4px solid var(--accent);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .error-message {
+            background: #fef2f2;
+            color: #991b1b;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid #fecaca;
+        }
+
+        /* Table */
+        .table-responsive {
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+        
+        th, td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        th {
+            background: #f8fafc;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+        }
+
+        tr:last-child td { border-bottom: none; }
+        
+        /* Loading Overlay */
+        #loading-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255,255,255,0.8);
+            backdrop-filter: blur(4px);
+            z-index: 50;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        
+        #loading-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+        
+        .loading-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: var(--shadow-lg);
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+        
+        .loading-spinner-lg {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--accent);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
     </style>
-  </head>
-  <body>
-    <div class="container">
-      <div class="header">
-        <div class="logo" aria-hidden></div>
-        <div>
-          <h1>Portland Zoning Query</h1>
-          <p class="lead">
-            Query zoning and building information for addresses or properties in a ZIP code.
-          </p>
-        </div>
-      </div>
+</head>
+<body>
 
-      {% if error %}
-      <div class="error">
-        <strong>Error:</strong>
-        <pre style="margin: 0; white-space: pre-wrap">{{ error }}</pre>
-      </div>
-      {% endif %}
-
-      <div class="grid">
-        <div class="card">
-          <div class="card-header">
-            <div>
-              <p class="card-title">Property Search</p>
-              <p class="card-subtitle">Find zoning details by address or ZIP.</p>
-            </div>
-            <span class="pill">Live data</span>
-          </div>
-          <form id="zoning-form" method="post">
-            <div class="radio-group">
-              <label class="radio-option">
-                <input type="radio" name="query_type" value="address" {% if query_type == 'address' %}checked{% endif %}>
-                <span>Single Address<small>Exact address lookup</small></span>
-              </label>
-              <label class="radio-option">
-                <input type="radio" name="query_type" value="zip" {% if query_type == 'zip' %}checked{% endif %}>
-                <span>ZIP Code & Properties<small>Batch results</small></span>
-              </label>
-            </div>
-
-            <div id="address-input" class="input-group">
-              <label for="address">Address</label>
-              <input
-                type="text"
-                id="address"
-                name="address"
-                placeholder="e.g. 935 NE 33RD AVE, Portland, OR"
-                value="{{ address or '' }}"
-              >
-            </div>
-
-            <div id="zip-input" class="input-group" style="display: none;">
-              <label for="zip">ZIP Code</label>
-              <input
-                type="text"
-                id="zip"
-                name="zip"
-                placeholder="e.g. 97211"
-                value="{{ zip or '' }}"
-              >
-              <div class="input-row" style="margin-top: 0.8rem;">
-                <div>
-                  <label for="num">Number of Properties</label>
-                  <input
-                    type="number"
-                    id="num"
-                    name="num"
-                    min="1"
-                    max="100"
-                    value="{{ num or 10 }}"
-                  >
-                </div>
-                <div>
-                  <label for="min_sqft">Minimum Square Footage</label>
-                  <input
-                    type="number"
-                    id="min_sqft"
-                    name="min_sqft"
-                    min="0"
-                    value="{{ min_sqft or '' }}"
-                  >
-                </div>
-              </div>
-              <label for="base_zones" style="margin-top: 0.8rem;">Base Zone Filter (optional)</label>
-              <select
-                multiple
-                id="base_zones"
-                name="base_zones"
-                size="6"
-              >
-                <option value="CI1" {% if 'CI1' in base_zones %}selected{% endif %}>CI1 - Campus Institutional 1</option>
-                <option value="CI2" {% if 'CI2' in base_zones %}selected{% endif %}>CI2 - Campus Institutional 2</option>
-                <option value="CX" {% if 'CX' in base_zones %}selected{% endif %}>CX - Central Commercial</option>
-                <option value="EX" {% if 'EX' in base_zones %}selected{% endif %}>EX - Central Employment</option>
-                <option value="RX" {% if 'RX' in base_zones %}selected{% endif %}>RX - Central Residential</option>
-                <option value="CE" {% if 'CE' in base_zones %}selected{% endif %}>CE - Commercial Employment</option>
-                <option value="CM1" {% if 'CM1' in base_zones %}selected{% endif %}>CM1 - Commercial Mixed Use 1</option>
-                <option value="CM2" {% if 'CM2' in base_zones %}selected{% endif %}>CM2 - Commercial Mixed Use 2</option>
-                <option value="CM3" {% if 'CM3' in base_zones %}selected{% endif %}>CM3 - Commercial Mixed Use 3</option>
-                <option value="CR" {% if 'CR' in base_zones %}selected{% endif %}>CR - Commercial Residential</option>
-                <option value="CL" {% if 'CL' in base_zones %}selected{% endif %}>CL - County Zoning Clackamas</option>
-                <option value="MC" {% if 'MC' in base_zones %}selected{% endif %}>MC - County Zoning Multnomah</option>
-                <option value="EG1" {% if 'EG1' in base_zones %}selected{% endif %}>EG1 - General Employment 1</option>
-                <option value="EG2" {% if 'EG2' in base_zones %}selected{% endif %}>EG2 - General Employment 2</option>
-                <option value="IG1" {% if 'IG1' in base_zones %}selected{% endif %}>IG1 - General Industrial 1</option>
-                <option value="IG2" {% if 'IG2' in base_zones %}selected{% endif %}>IG2 - General Industrial 2</option>
-                <option value="IH" {% if 'IH' in base_zones %}selected{% endif %}>IH - Heavy Industrial</option>
-                <option value="IR" {% if 'IR' in base_zones %}selected{% endif %}>IR - Institutional Residential</option>
-                <option value="OS" {% if 'OS' in base_zones %}selected{% endif %}>OS - Open Space</option>
-                <option value="R10" {% if 'R10' in base_zones %}selected{% endif %}>R10 - Residential 10,000</option>
-                <option value="R2.5" {% if 'R2.5' in base_zones %}selected{% endif %}>R2.5 - Residential 2,500</option>
-                <option value="R20" {% if 'R20' in base_zones %}selected{% endif %}>R20 - Residential 20,000</option>
-                <option value="R5" {% if 'R5' in base_zones %}selected{% endif %}>R5 - Residential 5,000</option>
-                <option value="R7" {% if 'R7' in base_zones %}selected{% endif %}>R7 - Residential 7,000</option>
-                <option value="RF" {% if 'RF' in base_zones %}selected{% endif %}>RF - Residential Farm / Forest</option>
-                <option value="RMP" {% if 'RMP' in base_zones %}selected{% endif %}>RMP - Residential Manufactured Dwelling Park</option>
-                <option value="RM1" {% if 'RM1' in base_zones %}selected{% endif %}>RM1 - Residential Multi-Dwelling 1</option>
-                <option value="RM2" {% if 'RM2' in base_zones %}selected{% endif %}>RM2 - Residential Multi-Dwelling 2</option>
-                <option value="RM3" {% if 'RM3' in base_zones %}selected{% endif %}>RM3 - Residential Multi-Dwelling 3</option>
-                <option value="RM4" {% if 'RM4' in base_zones %}selected{% endif %}>RM4 - Residential Multi-Dwelling 4</option>
-              </select>
-            </div>
-
-            <div class="controls">
-              <button id="query-btn" class="btn" type="submit">Get Zoning Info</button>
-              <div id="status" class="status" aria-live="polite"></div>
-            </div>
-          </form>
-        </div>
-
-        <div class="card" style="background: var(--surface-alt); border: none;">
-          <div class="card-header">
-            <div>
-              <p class="card-title">Tips for Better Results</p>
-              <p class="card-subtitle">Fewer errors, faster answers.</p>
-            </div>
-          </div>
-          <ul style="margin: 0; padding-left: 1.1rem; color: var(--muted); line-height: 1.5;">
-            <li>Use full street addresses for single property lookups.</li>
-            <li>ZIP searches work best with smaller batches (10–25).</li>
-            <li>Add base zone filters to narrow large ZIP results.</li>
-            <li>Ask property questions after results load.</li>
-          </ul>
-        </div>
-      </div>
-
-      {% if properties %}
-        <div class="results-card">
-          <p class="section-title">Zoning Information</p>
-          <p class="section-note">Review property zoning, building, and taxlot details.</p>
-          <div class="table-container">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Address</th>
-                  <th>Latitude</th>
-                  <th>Longitude</th>
-                  <th>Base Zone</th>
-                  <th>Overlay Zone</th>
-                  <th>Plan District</th>
-                  <th>Building Name</th>
-                  <th>Year Built</th>
-                  <th>Square Footage</th>
-                  <th>Stories</th>
-                  <th>Residential Units</th>
-                  <th>Taxlot ID</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for prop in properties %}
-                <tr>
-                  <td>{{ prop.Address or '' }}</td>
-                  <td>{{ prop.Latitude or '' }}</td>
-                  <td>{{ prop.Longitude or '' }}</td>
-                  <td>{{ prop['Base Zone'] or '' }}</td>
-                  <td>{{ prop['Overlay Zone'] or '' }}</td>
-                  <td>{{ prop['Plan District'] or '' }}</td>
-                  <td>{{ prop['Building Name'] or '' }}</td>
-                  <td>{{ prop['Year Built'] or '' }}</td>
-                  <td>{{ prop['Square Footage'] or '' }}</td>
-                  <td>{{ prop['Number of Stories'] or '' }}</td>
-                  <td>{{ prop['Residential Units'] or '' }}</td>
-                  <td>{{ prop['Taxlot ID'] or '' }}</td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div class="results-card">
-          <p class="section-title">Ask About a Property</p>
-          <p class="section-note">Ask zoning or usage questions tied to a specific property.</p>
-          <form method="post" style="margin-top: 0.75rem">
-            <input type="hidden" name="action" value="rag">
-            <input type="hidden" name="query_type" value="{{ query_type }}">
-            <textarea name="properties_json" style="display:none;">{{ properties | tojson }}</textarea>
-
-            <div class="input-group">
-              <label for="property_index">Select Property</label>
-              <select id="property_index" name="property_index">
-                {% for prop in properties %}
-                <option value="{{ loop.index0 }}" {% if selected_property_index == loop.index0 %}selected{% endif %}>
-                  {{ prop.get('Address') or prop.get('Building Address') or ('Property ' ~ loop.index) }}
-                </option>
-                {% endfor %}
-              </select>
-            </div>
-
-            <div class="input-group">
-              <label for="property_question">Your Question</label>
-              <input
-                type="text"
-                id="property_question"
-                name="property_question"
-                placeholder="e.g. Is daycare allowed on this property?"
-                value="{{ property_question or '' }}"
-              >
-            </div>
-
-            <div class="controls">
-              <button class="btn secondary" type="submit">Ask RAG</button>
-            </div>
-          </form>
-
-          {% if rag_answer %}
-          <div class="card" style="margin-top: 1rem">
-            <h3 style="margin-top: 0; font-family: 'Space Grotesk', sans-serif;">RAG Answer</h3>
-            <pre style="white-space: pre-wrap; margin: 0">{{ rag_answer }}</pre>
-          </div>
-          {% endif %}
-        </div>
-      {% endif %}
+<div id="loading-overlay">
+    <div class="loading-content">
+        <div class="loading-spinner-lg"></div>
+        <h3 id="loading-text">Processing...</h3>
+        <p class="text-sm text-muted">This may take a moment</p>
     </div>
+</div>
 
-    <script>
-      // Toggle input fields based on query type
-      const queryTypeRadios = document.querySelectorAll('input[name="query_type"]');
-      const addressInput = document.getElementById('address-input');
-      const zipInput = document.getElementById('zip-input');
+<div class="container">
+    <header>
+        <h1>Portland Zoning Intelligence</h1>
+        <p>Instant zoning data and AI-powered regulatory insights for real estate professionals.</p>
+    </header>
 
-      function updateInputs() {
-        const selected = document.querySelector('input[name="query_type"]:checked').value;
-        if (selected === 'address') {
-          addressInput.style.display = 'block';
-          zipInput.style.display = 'none';
+    {% if error %}
+    <div class="error-message">
+        <strong>Error:</strong> {{ error }}
+    </div>
+    {% endif %}
+
+    <div class="grid">
+        <!-- Sidebar / Search -->
+        <aside>
+            <div class="card">
+                <div class="card-header">
+                    <h2>Property Lookup</h2>
+                </div>
+                <div class="card-body">
+                    <form id="search-form" method="POST">
+                        <div class="radio-pills">
+                            <label>
+                                <input type="radio" name="query_type" value="address" onchange="toggleForm()" {% if query_type != 'zip' %}checked{% endif %}>
+                                <span>Address</span>
+                            </label>
+                            <label>
+                                <input type="radio" name="query_type" value="zip" onchange="toggleForm()" {% if query_type == 'zip' %}checked{% endif %}>
+                                <span>ZIP Code</span>
+                            </label>
+                        </div>
+
+                        <div id="address-fields">
+                            <div class="form-group">
+                                <label for="address">Property Address</label>
+                                <input type="text" id="address" name="address" placeholder="e.g. 1944 NE Sandy Blvd" value="{{ address }}">
+                            </div>
+                        </div>
+
+                        <div id="zip-fields" style="display: none;">
+                            <div class="form-group">
+                                <label for="zip">ZIP Code</label>
+                                <input type="text" id="zip" name="zip" placeholder="e.g. 97232" value="{{ zip }}">
+                            </div>
+                            <div class="form-group">
+                                <label for="num">Max Results</label>
+                                <input type="number" id="num" name="num" value="{{ num or 10 }}" min="1" max="50">
+                            </div>
+                            <div class="form-group">
+                                <label for="min_sqft">Min Sq Ft (Optional)</label>
+                                <input type="number" id="min_sqft" name="min_sqft" value="{{ min_sqft }}">
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn" id="search-btn">
+                            <span class="spinner"></span>
+                            Search Records
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card" style="margin-top: 1.5rem; background-color: #f1f5f9; border: none;">
+                <div class="card-body">
+                    <h4 style="font-size: 1rem; margin-bottom: 0.5rem;">Quick Tips</h4>
+                    <ul style="padding-left: 1.25rem; margin: 0; color: var(--muted); font-size: 0.875rem; list-style-type: circle;">
+                        <li style="margin-bottom: 0.5rem;">Use standard formatting for addresses (e.g. N, NE, SW).</li>
+                        <li style="margin-bottom: 0.5rem;">For RAG questions, be specific about the use case (e.g. "Can I build a duplex?").</li>
+                    </ul>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="results-section">
+            {% if properties %}
+            
+                <!-- Properties List -->
+                <div class="card">
+                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                        <h2>Found {{ properties|length }} Propert{% if properties|length != 1 %}ies{% else %}y{% endif %}</h2>
+                        <span class="badge">Live Data</span>
+                    </div>
+                    <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Address</th>
+                                <th>Zone</th>
+                                <th>Year</th>
+                                <th>Sq Ft</th>
+                                <th>Units</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for prop in properties %}
+                            <tr>
+                                <td style="font-weight: 500;">
+                                    {{ prop.get('Address') or prop.get('Building Address') }}<br>
+                                    <span style="font-size: 0.75rem; color: var(--muted); font-weight: 400;">{{ prop.get('Taxlot ID') }}</span>
+                                </td>
+                                <td><span class="badge" style="background: #f1f5f9; color: var(--text);">{{ prop.get('Base Zone') }}</span></td>
+                                <td>{{ prop.get('Year Built') }}</td>
+                                <td>{{ prop.get('Square Footage') }}</td>
+                                <td>{{ prop.get('Residential Units') }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    </div>
+                </div>
+
+                <!-- RAG Section -->
+                <div class="card" style="border-color: var(--accent);">
+                    <div class="card-header" style="background: #eff6ff; border-bottom-color: #dbeafe;">
+                        <h2 style="color: var(--accent-hover);">AI Zoning Analyst</h2>
+                        <p style="margin: 0.5rem 0 0; font-size: 0.875rem; color: var(--muted);">Select a property to ask specific code compliance questions.</p>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" id="rag-form">
+                            <input type="hidden" name="action" value="rag">
+                            <input type="hidden" name="query_type" value="{{ query_type }}">
+                            <input type="hidden" name="properties_json" value='{{ properties|tojson }}'>
+                            
+                            <div class="grid" style="grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1rem;">
+                                <div class="form-group">
+                                    <label for="property_index">Target Property</label>
+                                    <select name="property_index" id="property_index">
+                                        {% for prop in properties %}
+                                        <option value="{{ loop.index0 }}" {% if selected_property_index == loop.index0 %}selected{% endif %}>
+                                            {{ prop.get('Address') or prop.get('Building Address') }} ({{ prop.get('Base Zone') }})
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="property_question">Regulatory Question</label>
+                                <textarea name="property_question" id="property_question" rows="3" placeholder="Example: What are the setbacks for a detached ADU in this zone?">{{ property_question }}</textarea>
+                            </div>
+
+                            <button type="submit" class="btn btn-secondary" id="ask-btn">
+                                <span class="spinner"></span>
+                                Analyze with AI
+                            </button>
+                        </form>
+
+                        {% if rag_answer %}
+                        <div class="chat-response">
+                            <h3 style="font-size: 1.1rem; margin-bottom: 1rem;">Analysis Result</h3>
+                            <div style="white-space: pre-wrap; color: var(--text);">{{ rag_answer }}</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+            {% else %}
+                <!-- Empty State -->
+                <div class="card" style="text-align: center; padding: 4rem 2rem;">
+                    <div style="background: #f1f5f9; width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--muted);"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    </div>
+                    <h2 style="color: var(--muted);">No records loaded</h2>
+                    <p style="color: var(--muted); max-width: 400px; margin: 0 auto;">Use the sidebar to search for a specific property address or explore an entire ZIP code to get started.</p>
+                </div>
+            {% endif %}
+        </main>
+    </div>
+</div>
+
+<script>
+    function toggleForm() {
+        const type = document.querySelector('input[name="query_type"]:checked').value;
+        const addrFields = document.getElementById('address-fields');
+        const zipFields = document.getElementById('zip-fields');
+        
+        if (type === 'zip') {
+            addrFields.style.display = 'none';
+            zipFields.style.display = 'block';
         } else {
-          addressInput.style.display = 'none';
-          zipInput.style.display = 'block';
+            addrFields.style.display = 'block';
+            zipFields.style.display = 'none';
         }
-      }
+    }
 
-      queryTypeRadios.forEach(radio => {
-        radio.addEventListener('change', updateInputs);
-      });
+    // Initialize state
+    toggleForm();
 
-      // Initial update
-      updateInputs();
+    // Loading States
+    const searchForm = document.getElementById('search-form');
+    const searchBtn = document.getElementById('search-btn');
+    const ragForm = document.getElementById('rag-form');
+    const askBtn = document.getElementById('ask-btn');
+    const overlay = document.getElementById('loading-overlay');
+    const loadingText = document.getElementById('loading-text');
 
-      // Show a generating state immediately when user submits the form so they get feedback.
-      const form = document.getElementById("zoning-form");
-      const statusEl = document.getElementById("status");
-      const queryBtn = document.getElementById("query-btn");
+    if (searchForm) {
+        searchForm.addEventListener('submit', function() {
+            searchBtn.classList.add('loading');
+            searchBtn.disabled = true;
+            overlay.classList.add('active');
+            loadingText.textContent = "Fetching Property Data...";
+        });
+    }
 
-      form.addEventListener("submit", function () {
-        // Show generating indicator; allow form to submit normally.
-        queryBtn.disabled = true;
-        statusEl.innerHTML = '<span class="spinner"></span>Querying...';
-      });
-    </script>
-  </body>
+    if (ragForm) {
+        ragForm.addEventListener('submit', function() {
+            askBtn.classList.add('loading');
+            askBtn.disabled = true;
+            overlay.classList.add('active');
+            loadingText.textContent = "Analyzing Regulations...";
+        });
+    }
+</script>
+
+</body>
 </html>

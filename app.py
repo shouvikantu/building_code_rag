@@ -11,8 +11,6 @@ import json
 import os
 import requests
 from dotenv import load_dotenv
-from light_rag_impl import start_background_init
-
 # Load environment variables from .env
 load_dotenv()
 
@@ -21,28 +19,14 @@ app = Flask(__name__)
 # Basic logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+from light_rag_impl import query_rag, ingest_docs
+from zoning import query_property_by_address, query_properties_by_zip
 
-RAG_API_URL = os.getenv("RAG_API_URL", "").strip()
-RAG_API_TOKEN = os.getenv("RAG_API_TOKEN", "").strip()
-
-if not RAG_API_URL:
-    try:
-        from light_rag_impl import start_background_init
-        start_background_init()
-    except Exception:
-        logger.exception("Failed to initialize local RAG. Set RAG_API_URL to use remote RAG.")
-
-
-def _call_rag_remote(question: str, property_data: dict) -> str:
-    endpoint = f"{RAG_API_URL.rstrip('/')}/rag/query"
-    headers = {"Content-Type": "application/json"}
-    if RAG_API_TOKEN:
-        headers["Authorization"] = f"Bearer {RAG_API_TOKEN}"
-    payload = {"question": question, "property": property_data}
-    resp = requests.post(endpoint, json=payload, headers=headers, timeout=45)
-    resp.raise_for_status()
-    data = resp.json()
-    return data.get("answer", "")
+# Ingest docs at startup (or you could trigger it via a route)
+# try:
+#     ingest_docs()
+# except Exception as e:
+#     logger.error(f"Failed to ingest docs at startup: {e}")
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -77,12 +61,19 @@ def index():
                     if selected_property_index < 0 or selected_property_index >= len(properties):
                         raise IndexError("Invalid property selection.")
                     selected_property = properties[selected_property_index]
-
-                    if RAG_API_URL:
-                        rag_answer = _call_rag_remote(property_question, selected_property)
-                    else:
-                        from light_rag_impl import query_property
-                        rag_answer = query_property(property_question, selected_property)
+                    
+                    # Contextualize the question with property data
+                    context_q = (
+                        f"Property Info: {json.dumps(selected_property)}.\n"
+                        f"Question: {property_question}\n\n"
+                        "INSTRUCTIONS:\n"
+                        "- Provide a highly detailed and comprehensive answer.\n"
+                        "- ALWAYS cite the exact laws, code sections, subsections, and provisions from the retrieved documents.\n"
+                        "- Explicitly list out specific regulations, conditions, limitations (e.g., building area, operating hours), and specific operational requirements.\n"
+                        "- Do not vaguely refer to 'zoning laws' or 'certain conditions'. Extract and provide the actual details and rules from the text."
+                    )
+                    rag_answer = query_rag(context_q)
+                    
                 except Exception as e:
                     error = f"Error querying RAG: {str(e)}"
 
@@ -108,7 +99,6 @@ def index():
                 error = "Please enter an address."
             else:
                 try:
-                    from zoning import query_property_by_address
                     properties = [query_property_by_address(address)]
                 except Exception as e:
                     error = f"Error querying address: {str(e)}"
@@ -128,7 +118,6 @@ def index():
                 error = "Please enter a ZIP code."
             else:
                 try:
-                    from zoning import query_properties_by_zip
                     properties = query_properties_by_zip(
                         zip_code,
                         num,
