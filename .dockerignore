@@ -1,0 +1,14 @@
+.git/
+.env
+.venv/
+venv/
+__pycache__/
+*.pyc
+.DS_Store
+.gitignore
+.dockerignore
+*.csv
+*.ipynb
+docs/
+lightrag_storage/
+README.md

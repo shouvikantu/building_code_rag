@@ -1,10 +1,9 @@
 .env
-/docs
-venv
-.venv
+.venv/
+venv/
+__pycache__/
+*.pyc
 .DS_Store
-/lightrag_storage
-__pycache__/light_rag_impl.cpython-314.pyc
-__pycache__/supabase_store.cpython-314.pyc
-__pycache__/zoning.cpython-312.pyc
-__pycache__/zoning.cpython-314.pyc
+/docs/
+/lightrag_storage/
+*.csv

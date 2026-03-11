@@ -1,13 +1,17 @@
-Local RAG web UI
+# Portland Zoning Query Tool
 
-What I added
-- `app.py`: small Flask app that provides a text box to ask a question and shows the returned answer.
-- `templates/index.html`: very small UI.
-- `requirements.txt`: packages needed.
+A Flask web app that queries Portland zoning, building, and property information using the PortlandMaps API, with a RAG-powered Q&A feature backed by LightRAG and OpenAI.
 
-How to run
+## Architecture
 
-1. Create a virtual environment and install dependencies:
+- **`app.py`** — Flask web app with routes for address/ZIP lookup and RAG queries
+- **`zoning.py`** — PortlandMaps API client (geocoding, zoning, building, taxlot queries)
+- **`light_rag_impl.py`** — LightRAG wrapper for document ingestion and semantic Q&A
+- **`templates/index.html`** — Web UI
+
+## Setup
+
+### Local Development
 
 ```bash
 python -m venv .venv
@@ -15,22 +19,31 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-2. Ensure environment variables are set (you must have credentials):
+Set environment variables in `.env`:
 
-```bash
-export OPENAI_API_KEY="..."
-export PINECONE_API_KEY="..."
+```
+OPENAI_API_KEY=...
 ```
 
-3. Run the app:
+Run the app:
 
 ```bash
 python app.py
 ```
 
-Open http://127.0.0.1:5000 in a browser.
+Open http://localhost:5001 in a browser.
 
-Notes and assumptions
-- This app uses the retrieval and answer functions defined in `rag_pinecone.py` (it expects those functions and names to exist).
-- The original script also creates/ingests the Pinecone index if necessary; this app assumes the index already exists and is populated. If not, run `python rag_pinecone.py` once to ingest documents.
-- This is intentionally minimal and for local use only.
+### Docker (Google Cloud)
+
+Build and run locally:
+
+```bash
+docker build -t building-codes .
+docker run -p 5000:5000 --env-file .env building-codes
+```
+
+Deploy to Google Cloud Run:
+
+```bash
+gcloud run deploy building-codes --source . --region us-central1
+```
