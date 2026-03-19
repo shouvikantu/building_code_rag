@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portland Zoning Intelligence</title>
+    <title>Learn about Zoning, Building Code, and Licensure Rules Relevant to Providing Childcare in Portland, OR</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -417,8 +417,8 @@
 
     <div class="container">
         <header>
-            <h1>Portland Zoning Intelligence</h1>
-            <p>Instant zoning data and AI-powered regulatory insights.</p>
+            <h1>Learn about Zoning, Building Code, and Licensure Rules Relevant to Providing Childcare in Portland, OR</h1>
+            <p>Instant zoning data and AI-powered regulatory insights for childcare providers.</p>
         </header>
 
         {% if error %}
@@ -487,8 +487,8 @@
                             style="padding-left: 1.25rem; margin: 0; color: var(--muted); font-size: 0.875rem; list-style-type: circle;">
                             <li style="margin-bottom: 0.5rem;">Use standard formatting for addresses (e.g. N, NE, SW).
                             </li>
-                            <li style="margin-bottom: 0.5rem;">For RAG questions, be specific about the use case (e.g.
-                                "Can I build a duplex?").</li>
+                            <li style="margin-bottom: 0.5rem;">For questions about a property, provide detailed information and additional information that might be relevant (e.g.
+                                "The property is 4000 sq. feet, but only half of the space has sprinklers -- how many classrooms could fit in this facility?").</li>
                         </ul>
                     </div>
                 </div>
@@ -540,9 +540,9 @@
                 <!-- RAG Section -->
                 <div class="card" style="border-color: var(--accent);">
                     <div class="card-header" style="background: #eff6ff; border-bottom-color: #dbeafe;">
-                        <h2 style="color: var(--accent-hover);">AI Zoning Analyst</h2>
+                        <h2 style="color: var(--accent-hover);">Get More Information</h2>
                         <p style="margin: 0.5rem 0 0; font-size: 0.875rem; color: var(--muted);">Select a property to
-                            ask specific code compliance questions.</p>
+                            ask an AI model about zoning, code, and licensure rules relevant to the property.</p>
                     </div>
                     <div class="card-body">
                         <form method="POST" id="rag-form">
@@ -568,12 +568,12 @@
                             <div class="form-group">
                                 <label for="property_question">Regulatory Question</label>
                                 <textarea name="property_question" id="property_question" rows="3"
-                                    placeholder="Example: What are the setbacks for a detached ADU in this zone?">{{ property_question }}</textarea>
+                                    placeholder="Example: Does this property's zoning allow for a childcare facility?">{{ property_question }}</textarea>
                             </div>
 
                             <button type="submit" class="btn btn-secondary" id="ask-btn">
                                 <span class="spinner"></span>
-                                Analyze with AI
+                                Learn from AI Guidance
                             </button>
                         </form>
 
