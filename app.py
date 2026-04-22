@@ -5,7 +5,7 @@ Flask web UI for Portland Zoning Query Tool.
 Allows querying single addresses or multiple properties by ZIP code.
 """
 
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 import logging
 import json
 import os
@@ -143,6 +143,24 @@ def index():
         property_question=property_question,
         selected_property_index=selected_property_index,
     )
+
+@app.route("/api/chat", methods=["POST"])
+def chat():
+    """Handle generic RAG chat queries without zoning context."""
+    data = request.get_json()
+    if not data or "question" not in data:
+        return jsonify({"error": "No question provided"}), 400
+    
+    question = data["question"].strip()
+    if not question:
+        return jsonify({"error": "Empty question"}), 400
+        
+    try:
+        rag_answer = query_rag(question)
+        return jsonify({"answer": rag_answer})
+    except Exception as e:
+        logger.error(f"Chat error: {e}")
+        return jsonify({"error": "Failed to process query."}), 500
 
 if __name__ == "__main__":
     # Default to listening on all interfaces to avoid host header issues locally.
